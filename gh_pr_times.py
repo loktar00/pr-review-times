@@ -40,8 +40,12 @@ from tqdm import tqdm
 # Load environment variables from .env file
 load_dotenv()
 
+# Constants
 ISO_FORMAT = "%Y-%m-%d"
 API_ROOT = "https://api.github.com"
+DEFAULT_RETRIES = 3
+DEFAULT_TIMEOUT = 30.0
+PER_PAGE_LIMIT = 100
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Export PR timing metrics from GitHub repos to CSV")
@@ -51,8 +55,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--state", type=str, default="all", choices=["open", "closed", "all"], help="PR state filter")
     p.add_argument("--out-dir", type=str, default="./data", help="Output directory for CSV files (default: ./data)")
     p.add_argument("--sleep", type=float, default=0.0, help="Optional sleep seconds between API calls")
-    p.add_argument("--timeout", type=float, default=30.0, help="HTTP timeout seconds (increase if you get timeout errors)")
-    p.add_argument("--retries", type=int, default=3, help="Number of retries for failed requests")
+    p.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT, help="HTTP timeout seconds (increase if you get timeout errors)")
+    p.add_argument("--retries", type=int, default=DEFAULT_RETRIES, help="Number of retries for failed requests")
     p.add_argument("--force-full-refresh", action="store_true", help="Force full refresh, ignore existing data")
     return p.parse_args()
 
@@ -81,7 +85,11 @@ def within_range(created_at: datetime, since_dt: Optional[datetime], until_dt: O
         return False
     return True
 
-def gh_get(session: requests.Session, url: str, token: str, params: Dict = None, timeout: float = 30.0, retries: int = 3) -> requests.Response:
+def _calculate_backoff(attempt: int) -> int:
+    """Calculate exponential backoff wait time in seconds."""
+    return (attempt + 1) * 2  # 2s, 4s, 6s, etc.
+
+def gh_get(session: requests.Session, url: str, token: str, params: Dict = None, timeout: float = DEFAULT_TIMEOUT, retries: int = DEFAULT_RETRIES) -> requests.Response:
     headers = {
         "Accept": "application/vnd.github+json",
         "Authorization": f"Bearer {token}",
@@ -107,7 +115,7 @@ def gh_get(session: requests.Session, url: str, token: str, params: Dict = None,
 
             # Handle server errors with retry
             if resp.status_code >= 500 and attempt < retries - 1:
-                wait_time = (attempt + 1) * 2  # Exponential backoff: 2s, 4s, 6s
+                wait_time = _calculate_backoff(attempt)
                 print(f"⚠️  Server error {resp.status_code}. Retrying in {wait_time}s... (attempt {attempt + 1}/{retries})", file=sys.stderr)
                 time.sleep(wait_time)
                 continue
@@ -117,7 +125,7 @@ def gh_get(session: requests.Session, url: str, token: str, params: Dict = None,
 
         except requests.exceptions.Timeout:
             if attempt < retries - 1:
-                wait_time = (attempt + 1) * 2
+                wait_time = _calculate_backoff(attempt)
                 print(f"⚠️  Request timeout. Retrying in {wait_time}s... (attempt {attempt + 1}/{retries})", file=sys.stderr)
                 time.sleep(wait_time)
                 continue
@@ -125,7 +133,7 @@ def gh_get(session: requests.Session, url: str, token: str, params: Dict = None,
                 raise
         except requests.exceptions.RequestException as e:
             if attempt < retries - 1:
-                wait_time = (attempt + 1) * 2
+                wait_time = _calculate_backoff(attempt)
                 print(f"⚠️  Request error: {e}. Retrying in {wait_time}s... (attempt {attempt + 1}/{retries})", file=sys.stderr)
                 time.sleep(wait_time)
                 continue
@@ -134,12 +142,12 @@ def gh_get(session: requests.Session, url: str, token: str, params: Dict = None,
 
     raise requests.exceptions.HTTPError(f"Failed after {retries} attempts")
 
-def paginate(session: requests.Session, url: str, token: str, params: Dict, timeout: float, sleep_s: float, retries: int = 3) -> Iterable[List[Dict]]:
+def paginate(session: requests.Session, url: str, token: str, params: Dict, timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> Iterable[List[Dict]]:
     page = 1
     while True:
         q = dict(params or {})
         q["page"] = page
-        q["per_page"] = 100
+        q["per_page"] = PER_PAGE_LIMIT
         resp = gh_get(session, url, token, q, timeout=timeout, retries=retries)
         items = resp.json()
         if not isinstance(items, list):
@@ -151,28 +159,28 @@ def paginate(session: requests.Session, url: str, token: str, params: Dict, time
         if sleep_s > 0:
             time.sleep(sleep_s)
 
-def fetch_reviews(session: requests.Session, token: str, owner: str, repo: str, pr_number: int, timeout: float, sleep_s: float, retries: int = 3) -> List[Dict]:
+def fetch_reviews(session: requests.Session, token: str, owner: str, repo: str, pr_number: int, timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> List[Dict]:
     url = f"{API_ROOT}/repos/{owner}/{repo}/pulls/{pr_number}/reviews"
     all_reviews: List[Dict] = []
     for batch in paginate(session, url, token, {}, timeout, sleep_s, retries):
         all_reviews.extend(batch)
     return all_reviews
 
-def fetch_prs(session: requests.Session, token: str, owner: str, repo: str, state: str, timeout: float, sleep_s: float, retries: int = 3) -> Iterable[Dict]:
+def fetch_prs(session: requests.Session, token: str, owner: str, repo: str, state: str, timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> Iterable[Dict]:
     url = f"{API_ROOT}/repos/{owner}/{repo}/pulls"
     params = {"state": state, "sort": "created", "direction": "desc"}
     for batch in paginate(session, url, token, params, timeout, sleep_s, retries):
         for pr in batch:
             yield pr
 
-def enrich_pr(session: requests.Session, token: str, owner: str, repo: str, pr_number: int, timeout: float, retries: int = 3) -> Dict:
+def enrich_pr(session: requests.Session, token: str, owner: str, repo: str, pr_number: int, timeout: float, retries: int = DEFAULT_RETRIES) -> Dict:
     # Pull the full PR details for counts like additions, deletions, changed_files, commits
     url = f"{API_ROOT}/repos/{owner}/{repo}/pulls/{pr_number}"
     resp = gh_get(session, url, token, timeout=timeout, retries=retries)
     return resp.json()
 
 def count_prs(session: requests.Session, token: str, owner: str, repo: str, state: str,
-              since_dt: Optional[datetime], until_dt: Optional[datetime], timeout: float, sleep_s: float, retries: int = 3) -> int:
+              since_dt: Optional[datetime], until_dt: Optional[datetime], timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> int:
     """Count total PRs that match the criteria without fetching full details."""
     count = 0
     for pr in fetch_prs(session, token, owner, repo, state, timeout, sleep_s, retries):
@@ -301,14 +309,14 @@ def main() -> None:
             continue
 
         # Open CSV file (append if exists and not forcing refresh, otherwise write new)
-        if file_exists and not args.force_full_refresh:
-            csv_file = open(out_path, "a", newline="", encoding="utf-8")
-            csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
-            # Don't write header when appending
+        append_mode = file_exists and not args.force_full_refresh
+        mode = "a" if append_mode else "w"
+        csv_file = open(out_path, mode, newline="", encoding="utf-8")
+        csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+
+        if append_mode:
             print(f"📝 Appending to {out_path}", file=sys.stderr)
         else:
-            csv_file = open(out_path, "w", newline="", encoding="utf-8")
-            csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
             csv_writer.writeheader()
             print(f"📝 Creating new file {out_path}", file=sys.stderr)
 

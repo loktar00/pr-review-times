@@ -243,6 +243,49 @@ Use this to:
 - **Long tail**: Some PRs taking much longer than typical
 - **Tight distribution**: Consistent review process
 
+## Understanding the Metrics
+
+### Time Metrics Explained
+
+The analysis tracks three key time periods:
+
+1. **Time to First Review** (creation → first review)
+   - How long until someone first reviews the PR
+   - Example: 14 hours = ~14 hours until first review appears
+
+2. **Time to Merge** (creation → merge)
+   - Total time from PR creation until it's merged
+   - Example: 44 hours = ~1.8 days total PR lifetime
+
+3. **Review → Merge Time** (first review → merge)
+   - Time from first review to actual merge
+   - Calculated as: Time to Merge - Time to First Review
+   - Example: 30 hours = after first review, takes another ~30 hours to merge
+   - This includes: additional review rounds, code changes, CI/CD, approvals, etc.
+
+### Why PRs Take Longer to Merge Than First Review
+
+Even if first review happens quickly (e.g., 14 hours), total merge time is longer (e.g., 44 hours) because:
+- Multiple rounds of review and feedback
+- Code changes and updates
+- CI/CD pipeline runs
+- Waiting for final approval
+- Coordination and scheduling
+
+This is **normal and healthy** for quality code review! Quick first review shows responsiveness, while additional time ensures thorough review.
+
+### PR Status Categories
+
+- **Merged**: PRs successfully merged into the main branch
+- **Closed (not merged)**: PRs closed/rejected without merging
+- **Still Open**: PRs currently open and awaiting action
+
+### Time Periods
+
+- **Last 30 Days**: Recent performance - track current team velocity
+- **Last Quarter (90 Days)**: Broader trends - quarterly reviews and seasonal patterns
+- **Overall**: Historical baseline - compare against long-term averages
+
 ## Troubleshooting
 
 **No CSV files found:**
@@ -263,6 +306,12 @@ python gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
 - Script automatically waits for rate limit reset
 - GitHub allows 5,000 requests/hour for authenticated requests
 - Add `--sleep 0.5` to slow down requests
+
+**Emoji encoding errors (Windows):**
+```powershell
+# Set UTF-8 encoding before running
+$env:PYTHONIOENCODING='utf-8'; python analyze_pr_times.py
+```
 
 ## Files & Directories
 

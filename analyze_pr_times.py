@@ -37,13 +37,22 @@ import matplotlib.dates as mdates
 import numpy as np
 from scipy import stats
 
+# Constants
+HOURS_PER_DAY = 24
+DAYS_PER_MONTH = 30
+MIN_PRS_DEFAULT = 3
+CHART_DPI = 150
+CHART_STYLE = 'seaborn-v0_8-darkgrid'
+OUTLIER_CAP_REVIEW_HOURS = 200
+OUTLIER_CAP_MERGE_HOURS = 500
+
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Analyze PR review time metrics from CSV")
     p.add_argument("--input", type=str, default=None, help="Input CSV file (if not provided, analyzes all CSVs in --data-dir)")
     p.add_argument("--data-dir", type=str, default="./data", help="Directory to scan for CSV files when --input not provided")
     p.add_argument("--output-dir", type=str, default="./analytics", help="Output directory for charts")
-    p.add_argument("--min-prs", type=int, default=3, help="Minimum PRs for per-developer stats")
+    p.add_argument("--min-prs", type=int, default=MIN_PRS_DEFAULT, help="Minimum PRs for per-developer stats")
     return p.parse_args()
 
 
@@ -75,12 +84,11 @@ def load_multiple_csv_files(csv_paths: List[str]) -> List[Dict]:
     all_prs = []
     for csv_path in csv_paths:
         try:
-            with open(csv_path, "r", encoding="utf-8") as f:
-                reader = csv.DictReader(f)
-                for row in reader:
-                    all_prs.append(row)
-        except Exception as e:
-            print(f"⚠️  Warning: Could not read {csv_path}: {e}", file=sys.stderr)
+            prs = load_pr_data(csv_path)
+            all_prs.extend(prs)
+        except SystemExit:
+            # load_pr_data calls sys.exit on FileNotFoundError, handle gracefully for multiple files
+            print(f"⚠️  Warning: Could not read {csv_path}", file=sys.stderr)
     return all_prs
 
 
@@ -104,6 +112,28 @@ def parse_datetime(value: str) -> Optional[datetime]:
         return None
 
 
+def hours_to_days(hours: float) -> float:
+    """Convert hours to days."""
+    return hours / HOURS_PER_DAY
+
+
+def filter_prs_by_period(prs: List[Dict], days: Optional[int] = None) -> List[Dict]:
+    """Filter PRs by time period (last N days). If days is None, return all PRs."""
+    if days is None:
+        return prs
+
+    from datetime import timedelta, timezone
+    cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+
+    filtered = []
+    for pr in prs:
+        created = parse_datetime(pr["created_at"])
+        if created and created >= cutoff_date:
+            filtered.append(pr)
+
+    return filtered
+
+
 def calculate_overall_stats(prs: List[Dict]) -> Dict:
     """Calculate overall statistics."""
     review_times = [parse_float(pr["time_to_first_review_hours"]) for pr in prs]
@@ -117,11 +147,13 @@ def calculate_overall_stats(prs: List[Dict]) -> Dict:
 
     total_prs = len(prs)
     merged_prs = len([pr for pr in prs if pr["merged_at"]])
-    open_prs = len([pr for pr in prs if not pr["merged_at"]])
+    closed_not_merged_prs = len([pr for pr in prs if pr["closed_at"] and not pr["merged_at"]])
+    open_prs = len([pr for pr in prs if not pr["closed_at"]])
 
     return {
         "total_prs": total_prs,
         "merged_prs": merged_prs,
+        "closed_not_merged_prs": closed_not_merged_prs,
         "open_prs": open_prs,
         "avg_review_time": np.mean(review_times) if review_times else None,
         "median_review_time": np.median(review_times) if review_times else None,
@@ -213,6 +245,33 @@ def analyze_trends(prs: List[Dict]) -> Dict:
     }
 
 
+def print_time_period_stats(prs: List[Dict], period_name: str, period_days: Optional[int] = None) -> None:
+    """Print statistics for a specific time period."""
+    filtered_prs = filter_prs_by_period(prs, period_days)
+
+    if not filtered_prs:
+        print(f"\n📊 {period_name.upper()} - No PRs in this period")
+        return
+
+    stats = calculate_overall_stats(filtered_prs)
+
+    print(f"\n📊 {period_name.upper()}")
+    print("-" * 80)
+    print(f"PRs in period:          {stats['total_prs']}")
+    print(f"  └─ Merged:            {stats['merged_prs']}")
+    print(f"  └─ Closed (not merged): {stats['closed_not_merged_prs']}")
+    print(f"  └─ Still Open:        {stats['open_prs']}")
+
+    if stats["avg_review_time"]:
+        print(f"\nTime to First Review:   {stats['avg_review_time']:.2f} hrs ({hours_to_days(stats['avg_review_time']):.1f} days) avg, {stats['median_review_time']:.2f} hrs median")
+
+    if stats["avg_merge_time"]:
+        print(f"Time to Merge:          {stats['avg_merge_time']:.2f} hrs ({hours_to_days(stats['avg_merge_time']):.1f} days) avg, {stats['median_merge_time']:.2f} hrs median")
+        if stats["avg_review_time"]:
+            review_to_merge = stats['avg_merge_time'] - stats['avg_review_time']
+            print(f"Review → Merge:         {review_to_merge:.2f} hrs ({hours_to_days(review_to_merge):.1f} days)")
+
+
 def print_statistics(overall: Dict, per_dev: Dict, trends: Dict) -> None:
     """Print statistics to console."""
     print("\n" + "=" * 80)
@@ -224,30 +283,35 @@ def print_statistics(overall: Dict, per_dev: Dict, trends: Dict) -> None:
     print("-" * 80)
     print(f"Total PRs:              {overall['total_prs']}")
     print(f"  └─ Merged:            {overall['merged_prs']}")
-    print(f"  └─ Open:              {overall['open_prs']}")
+    print(f"  └─ Closed (not merged): {overall['closed_not_merged_prs']}")
+    print(f"  └─ Still Open:        {overall['open_prs']}")
 
     if overall["avg_review_time"]:
-        print(f"\nTime to First Review:")
-        print(f"  └─ Average:           {overall['avg_review_time']:.2f} hours ({overall['avg_review_time']/24:.1f} days)")
-        print(f"  └─ Median:            {overall['median_review_time']:.2f} hours ({overall['median_review_time']/24:.1f} days)")
+        print(f"\nTime to First Review (creation → first review):")
+        print(f"  └─ Average:           {overall['avg_review_time']:.2f} hours ({hours_to_days(overall['avg_review_time']):.1f} days)")
+        print(f"  └─ Median:            {overall['median_review_time']:.2f} hours ({hours_to_days(overall['median_review_time']):.1f} days)")
 
     if overall["avg_merge_time"]:
-        print(f"\nTime to Merge:")
-        print(f"  └─ Average:           {overall['avg_merge_time']:.2f} hours ({overall['avg_merge_time']/24:.1f} days)")
-        print(f"  └─ Median:            {overall['median_merge_time']:.2f} hours ({overall['median_merge_time']/24:.1f} days)")
+        print(f"\nTime to Merge (creation → merge):")
+        print(f"  └─ Average:           {overall['avg_merge_time']:.2f} hours ({hours_to_days(overall['avg_merge_time']):.1f} days)")
+        print(f"  └─ Median:            {overall['median_merge_time']:.2f} hours ({hours_to_days(overall['median_merge_time']):.1f} days)")
+
+        if overall["avg_review_time"]:
+            review_to_merge = overall['avg_merge_time'] - overall['avg_review_time']
+            print(f"  └─ Avg time from first review to merge: {review_to_merge:.2f} hours ({hours_to_days(review_to_merge):.1f} days)")
 
     # Trends
     print("\n📉 TRENDS")
     print("-" * 80)
     if trends.get("review_slope") is not None:
         review_direction = "🔴 INCREASING" if trends["review_slope"] > 0 else "🟢 DECREASING"
-        days_change = abs(trends["review_slope"]) * 30  # Change per 30 days
+        days_change = abs(trends["review_slope"]) * DAYS_PER_MONTH
         print(f"Review Time Trend:      {review_direction}")
         print(f"  └─ Change per month:  {days_change:.2f} hours")
 
     if trends.get("merge_slope") is not None:
         merge_direction = "🔴 INCREASING" if trends["merge_slope"] > 0 else "🟢 DECREASING"
-        days_change = abs(trends["merge_slope"]) * 30
+        days_change = abs(trends["merge_slope"]) * DAYS_PER_MONTH
         print(f"Merge Time Trend:       {merge_direction}")
         print(f"  └─ Change per month:  {days_change:.2f} hours")
 
@@ -262,11 +326,43 @@ def print_statistics(overall: Dict, per_dev: Dict, trends: Dict) -> None:
             print(f"\n{author}:")
             print(f"  └─ PRs:               {stats['pr_count']}")
             if stats["avg_review_time"] is not None:
-                print(f"  └─ Avg Review Time:   {stats['avg_review_time']:.2f} hours ({stats['avg_review_time']/24:.1f} days)")
+                print(f"  └─ Avg Time to 1st Review: {stats['avg_review_time']:.2f} hours ({hours_to_days(stats['avg_review_time']):.1f} days)")
             if stats["avg_merge_time"] is not None:
-                print(f"  └─ Avg Merge Time:    {stats['avg_merge_time']:.2f} hours ({stats['avg_merge_time']/24:.1f} days)")
+                print(f"  └─ Avg Time to Merge: {stats['avg_merge_time']:.2f} hours ({hours_to_days(stats['avg_merge_time']):.1f} days)")
+                if stats["avg_review_time"] is not None:
+                    review_to_merge = stats['avg_merge_time'] - stats['avg_review_time']
+                    print(f"  └─ Avg Review → Merge: {review_to_merge:.2f} hours ({hours_to_days(review_to_merge):.1f} days)")
 
     print("\n" + "=" * 80)
+
+
+def _format_time_axis(ax):
+    """Format axis for time-based charts."""
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
+    ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+    plt.setp(ax.xaxis.get_majorticklabels(), rotation=45, ha='right')
+
+
+def _add_trend_line(ax, dates, values, slope):
+    """Add trend line to a scatter plot."""
+    dates_numeric = [(d - dates[0]).days for d in dates]
+    intercept = np.mean(values) - slope * np.mean(dates_numeric)
+    trend_line = [slope * d + intercept for d in dates_numeric]
+    ax.plot(dates, trend_line, 'r--', linewidth=2, label=f'Trend: {slope*DAYS_PER_MONTH:.2f} hrs/month')
+
+
+def _create_histogram(ax, values, color, title, outlier_cap):
+    """Create a histogram with mean and median lines."""
+    filtered_values = [v for v in values if v is not None and v < outlier_cap]
+
+    if filtered_values:
+        ax.hist(filtered_values, bins=30, color=color, edgecolor='black', alpha=0.7)
+        ax.axvline(np.mean(filtered_values), color='red', linestyle='--', linewidth=2, label=f'Mean: {np.mean(filtered_values):.1f}h')
+        ax.axvline(np.median(filtered_values), color='green', linestyle='--', linewidth=2, label=f'Median: {np.median(filtered_values):.1f}h')
+        ax.set_xlabel('Hours', fontsize=12)
+        ax.set_ylabel('Frequency', fontsize=12)
+        ax.set_title(title, fontsize=14, fontweight='bold')
+        ax.legend()
 
 
 def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends: Dict, output_dir: str) -> None:
@@ -274,7 +370,7 @@ def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends:
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     # Set style
-    plt.style.use('seaborn-v0_8-darkgrid')
+    plt.style.use(CHART_STYLE)
 
     # 1. Review Time Trend Over Time
     dated_prs = trends.get("dated_prs", [])
@@ -290,18 +386,12 @@ def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends:
 
             # Add trend line
             if trends.get("review_slope") is not None:
-                dates_numeric = [(d - dates[0]).days for d in dates]
-                slope = trends["review_slope"]
-                intercept = np.mean(review_times) - slope * np.mean(dates_numeric)
-                trend_line = [slope * d + intercept for d in dates_numeric]
-                ax1.plot(dates, trend_line, 'r--', linewidth=2, label=f'Trend: {slope*30:.2f} hrs/month')
+                _add_trend_line(ax1, dates, review_times, trends["review_slope"])
 
             ax1.set_ylabel('Hours', fontsize=12)
             ax1.set_title('Time to First Review Over Time', fontsize=14, fontweight='bold')
             ax1.legend()
-            ax1.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            ax1.xaxis.set_major_locator(mdates.AutoDateLocator())
-            plt.setp(ax1.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            _format_time_axis(ax1)
 
         # Merge times
         merge_dates = [pr["date"] for pr in dated_prs if pr["merge_time"] is not None]
@@ -312,22 +402,16 @@ def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends:
 
             # Add trend line
             if trends.get("merge_slope") is not None:
-                dates_numeric = [(d - merge_dates[0]).days for d in merge_dates]
-                slope = trends["merge_slope"]
-                intercept = np.mean(merge_times) - slope * np.mean(dates_numeric)
-                trend_line = [slope * d + intercept for d in dates_numeric]
-                ax2.plot(merge_dates, trend_line, 'r--', linewidth=2, label=f'Trend: {slope*30:.2f} hrs/month')
+                _add_trend_line(ax2, merge_dates, merge_times, trends["merge_slope"])
 
             ax2.set_xlabel('Date', fontsize=12)
             ax2.set_ylabel('Hours', fontsize=12)
             ax2.set_title('Time to Merge Over Time', fontsize=14, fontweight='bold')
             ax2.legend()
-            ax2.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m-%d'))
-            ax2.xaxis.set_major_locator(mdates.AutoDateLocator())
-            plt.setp(ax2.xaxis.get_majorticklabels(), rotation=45, ha='right')
+            _format_time_axis(ax2)
 
         plt.tight_layout()
-        plt.savefig(f"{output_dir}/trends_over_time.png", dpi=150, bbox_inches='tight')
+        plt.savefig(f"{output_dir}/trends_over_time.png", dpi=CHART_DPI, bbox_inches='tight')
         print(f"✓ Saved: {output_dir}/trends_over_time.png")
         plt.close()
 
@@ -353,7 +437,7 @@ def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends:
         ax2.invert_yaxis()
 
         plt.tight_layout()
-        plt.savefig(f"{output_dir}/per_developer_stats.png", dpi=150, bbox_inches='tight')
+        plt.savefig(f"{output_dir}/per_developer_stats.png", dpi=CHART_DPI, bbox_inches='tight')
         print(f"✓ Saved: {output_dir}/per_developer_stats.png")
         plt.close()
 
@@ -361,31 +445,13 @@ def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends:
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
 
     review_times = [parse_float(pr["time_to_first_review_hours"]) for pr in prs]
-    review_times = [t for t in review_times if t is not None and t < 200]  # Cap outliers
-
-    if review_times:
-        ax1.hist(review_times, bins=30, color='skyblue', edgecolor='black', alpha=0.7)
-        ax1.axvline(np.mean(review_times), color='red', linestyle='--', linewidth=2, label=f'Mean: {np.mean(review_times):.1f}h')
-        ax1.axvline(np.median(review_times), color='green', linestyle='--', linewidth=2, label=f'Median: {np.median(review_times):.1f}h')
-        ax1.set_xlabel('Hours', fontsize=12)
-        ax1.set_ylabel('Frequency', fontsize=12)
-        ax1.set_title('Distribution of Review Times', fontsize=14, fontweight='bold')
-        ax1.legend()
+    _create_histogram(ax1, review_times, 'skyblue', 'Distribution of Review Times', OUTLIER_CAP_REVIEW_HOURS)
 
     merge_times = [parse_float(pr["time_to_merge_hours"]) for pr in prs]
-    merge_times = [t for t in merge_times if t is not None and t < 500]  # Cap outliers
-
-    if merge_times:
-        ax2.hist(merge_times, bins=30, color='lightgreen', edgecolor='black', alpha=0.7)
-        ax2.axvline(np.mean(merge_times), color='red', linestyle='--', linewidth=2, label=f'Mean: {np.mean(merge_times):.1f}h')
-        ax2.axvline(np.median(merge_times), color='green', linestyle='--', linewidth=2, label=f'Median: {np.median(merge_times):.1f}h')
-        ax2.set_xlabel('Hours', fontsize=12)
-        ax2.set_ylabel('Frequency', fontsize=12)
-        ax2.set_title('Distribution of Merge Times', fontsize=14, fontweight='bold')
-        ax2.legend()
+    _create_histogram(ax2, merge_times, 'lightgreen', 'Distribution of Merge Times', OUTLIER_CAP_MERGE_HOURS)
 
     plt.tight_layout()
-    plt.savefig(f"{output_dir}/distributions.png", dpi=150, bbox_inches='tight')
+    plt.savefig(f"{output_dir}/distributions.png", dpi=CHART_DPI, bbox_inches='tight')
     print(f"✓ Saved: {output_dir}/distributions.png")
     plt.close()
 
@@ -433,6 +499,13 @@ def main() -> None:
 
     print_statistics(overall, per_dev, trends)
 
+    # Print time period analysis
+    print("\n" + "=" * 80)
+    print("📅 TIME PERIOD ANALYSIS")
+    print("=" * 80)
+    print_time_period_stats(prs, "Last 30 Days", 30)
+    print_time_period_stats(prs, "Last Quarter (90 Days)", 90)
+
     print("\n📈 Creating visualizations...")
     create_visualizations(prs, overall, per_dev, trends, args.output_dir)
 
@@ -441,4 +514,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
