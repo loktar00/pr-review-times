@@ -2,27 +2,41 @@
 
 Analyze pull request review performance across your GitHub repositories. Track review times, identify bottlenecks, and visualize trends with beautiful charts.
 
+## 🎯 [View Live Demo](./demo/report.html)
+
+See a fully-featured example report with sample data from two repositories. [Demo Documentation](./demo/README.md)
+
 ## What This Does
 
-This toolkit fetches PR data from GitHub and generates:
+This toolkit fetches PR data from GitHub and generates a **beautiful HTML report** with comprehensive analytics:
+
+**📄 HTML Report:**
+- Professional, shareable web report with all your PR metrics
+- Three time periods: Overall, Last Quarter, and Last 30 Days
+- Interactive charts and visualizations embedded directly
+- Mobile-responsive design
 
 **📊 Statistics:**
 - Average and median time to first review
 - Average and median time to merge
+- Review → Merge time breakdown
 - Per-developer performance metrics
-- Total PR counts and completion rates
+- PR counts, merge rates, and completion stats
 
 **📈 Visual Charts:**
 - Review time trends over time (are you improving or slowing down?)
 - Per-developer comparison charts
 - Distribution histograms showing typical vs outlier PRs
+- Separate charts for each time period
 
 **🎯 Key Features:**
+- **Multi-repository support**: Analyzes multiple repositories with both combined and individual views
+- **Time period analysis**: Compare performance across Overall, Last Quarter, and Last 30 Days
 - **Automatic resume**: Detects existing data and continues from where you left off
 - **Crash-safe**: Data saved as it's fetched - resume after timeouts/errors
-- **Per-repo files**: Each repository gets its own CSV file
+- **Per-repo files**: Each repository gets its own CSV file and report section
 - **Auto-retry**: Network errors automatically retried with exponential backoff
-- **Multi-repo analysis**: Combines multiple repos for team-wide insights
+- **Per-repository charts**: Dedicated visualizations for each repo plus combined views
 
 ## Quick Start
 
@@ -66,11 +80,19 @@ This creates CSV files in `./data/` directory (one per repo).
 ```bash
 # Analyzes all CSV files in ./data automatically
 python analyze_pr_times.py
+
+# On Windows, if you see encoding errors:
+$env:PYTHONIOENCODING='utf-8'; python analyze_pr_times.py
 ```
 
 Results:
-- Statistics printed to console
-- Charts saved to `./analytics/` directory
+- **HTML Report**: `./analytics/report.html` - Open in your browser for a beautiful, comprehensive report
+- **Multi-Repository Support**: Automatically detects multiple CSV files and generates:
+  - Combined "All Repositories" view with aggregated statistics
+  - Individual sections for each repository with dedicated charts
+- **Time Period Analysis**: Overall, Last Quarter (90 days), and Last 30 Days for each repository
+- **Per-Repository Charts**: Each repository gets its own trend and distribution charts
+- **Per-Developer Stats**: Shows developers across all repositories with combined metrics
 
 ## What Data You Get
 
@@ -101,43 +123,21 @@ Each repository gets a CSV file with these columns:
 
 ### Analytics Output
 
-**Console Statistics:**
-```
-📊 PR REVIEW TIME ANALYSIS
-────────────────────────────────────────────────────────────
-Total PRs:              1,109
-  └─ Merged:            950
-  └─ Open:              159
+**HTML Report** (`./analytics/report.html`):
+- 🎨 Beautiful, professional web report you can share with your team
+- 📊 **Three Time Periods**: Overall, Last Quarter (90 days), and Last 30 Days
+- 📈 Each period includes:
+  - Summary statistics (PR counts, merge rates)
+  - Time metrics (review time, merge time, review→merge time)
+  - Trend indicators (improving/declining with visual badges)
+  - Interactive charts (trends over time, distribution histograms)
+- 👥 **Per-Developer Stats**: Detailed table and charts showing individual performance
+- 📱 **Responsive Design**: Works perfectly on desktop, tablet, and mobile
 
-Time to First Review:
-  └─ Average:           5.2 hours (0.2 days)
-  └─ Median:            0.5 hours (0.0 days)
-
-Time to Merge:
-  └─ Average:           48.3 hours (2.0 days)
-  └─ Median:            24.1 hours (1.0 days)
-
-TRENDS
-────────────────────────────────────────────────────────────
-Review Time Trend:      🟢 DECREASING
-  └─ Change per month:  -0.5 hours
-
-Merge Time Trend:       🔴 INCREASING
-  └─ Change per month:  +2.3 hours
-
-PER DEVELOPER STATISTICS
-────────────────────────────────────────────────────────────
-alice:
-  └─ PRs:               142
-  └─ Avg Review Time:   0.8 hours
-  └─ Avg Merge Time:    35.2 hours
-...
-```
-
-**Visual Charts (`./analytics/`):**
-- `trends_over_time.png` - Review/merge times over time with trend lines
-- `per_developer_stats.png` - Bar charts comparing developers
-- `distributions.png` - Histograms of review and merge time distributions
+**Generated Charts** (embedded in HTML, also saved separately):
+- `trends_overall.png`, `trends_last_quarter.png`, `trends_last_30_days.png` - Time series with trend lines
+- `distributions_overall.png`, `distributions_last_quarter.png`, `distributions_last_30_days.png` - Histograms
+- `per_developer_stats.png` - Per-developer comparison bars
 
 ## Common Usage Patterns
 
@@ -320,10 +320,15 @@ pr-review-times/
 ├── data/                          # CSV files (one per repo)
 │   ├── owner_repo.csv
 │   └── org_project.csv
-├── analytics/                     # Generated charts
-│   ├── trends_over_time.png
-│   ├── per_developer_stats.png
-│   └── distributions.png
+├── analytics/                     # Generated reports and charts
+│   ├── report.html                # 📄 Main HTML report (open this!)
+│   ├── trends_overall.png         # Charts for all time periods
+│   ├── trends_last_quarter.png
+│   ├── trends_last_30_days.png
+│   ├── distributions_overall.png
+│   ├── distributions_last_quarter.png
+│   ├── distributions_last_30_days.png
+│   └── per_developer_stats.png
 ├── gh_pr_times.py                 # Data fetching script
 ├── analyze_pr_times.py            # Analytics & visualization
 ├── requirements.txt               # Python dependencies
@@ -336,6 +341,70 @@ pr-review-times/
 - GitHub Personal Access Token
 - Dependencies: `requests`, `python-dotenv`, `tqdm`, `matplotlib`, `numpy`, `scipy`
 
+## Hosting on GitHub Pages
+
+You can host your PR analytics report on GitHub Pages to share with your team:
+
+### Setup
+
+1. **Generate your report:**
+```bash
+python gh_pr_times.py --repos your-org/your-repo
+python analyze_pr_times.py
+```
+
+2. **Create gh-pages branch:**
+```bash
+git checkout --orphan gh-pages
+git rm -rf .
+```
+
+3. **Copy report files:**
+```bash
+cp -r analytics/* .
+git add .
+git commit -m "Add PR analytics report"
+git push origin gh-pages
+```
+
+4. **Enable GitHub Pages:**
+   - Go to your repository Settings → Pages
+   - Select `gh-pages` branch as source
+   - Your report will be available at: `https://your-username.github.io/your-repo/report.html`
+
+### Automated Updates
+
+Add a GitHub Action to automatically update the report:
+
+```yaml
+# .github/workflows/pr-analytics.yml
+name: Update PR Analytics
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:
+
+jobs:
+  update-analytics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - run: pip install -r requirements.txt
+      - run: |
+          python gh_pr_times.py --repos your-org/your-repo
+          python analyze_pr_times.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./analytics
+```
+
 ## Notes
 
 - **Incremental by default**: Always resumes from latest PR automatically
@@ -343,6 +412,7 @@ pr-review-times/
 - **Multi-repo safe**: Each repo gets its own CSV file
 - **Reviews vs Comments**: "Time to first review" tracks submitted reviews, not PR comments
 - **Private repos**: Token needs `repo` scope (not just `public_repo`)
+- **Demo available**: Check out the [live demo](./demo/report.html) with sample data
 
 ## License
 

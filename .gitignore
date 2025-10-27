@@ -28,13 +28,17 @@ venv/
 ENV/
 env/
 
-# Data directory with CSV files
+# Data directory with CSV files (but not demo data)
 data/
 *.csv
+!demo_data/
+!demo_data/*.csv
 
-# Analytics output
+# Analytics output (but not demo output)
 analytics/
 *_analysis/
+!demo/
+!demo/**
 
 # IDE
 .vscode/
