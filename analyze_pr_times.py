@@ -394,7 +394,7 @@ def create_period_visualizations(prs: List[Dict], period_key: str, period_name: 
     """Create visualization charts for a specific time period and repository, return chart filenames."""
     # Ensure output directory exists
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
+
     chart_files = {}
 
     # Create safe filename prefix for repo
@@ -1010,16 +1010,16 @@ def generate_html_report(prs_by_repo: Dict[str, List[Dict]], output_dir: str) ->
         all_prs = []
         for prs in prs_by_repo.values():
             all_prs.extend(prs)
-        
+
         global_dev_stats = calculate_per_developer_stats(all_prs)
         if global_dev_stats:
             sorted_devs = sorted(global_dev_stats.items(), key=lambda x: x[1]["pr_count"], reverse=True)
-            
+
             html += """
         <div class="global-dev-stats">
             <h2>👥 Global Developer Statistics (All Repositories)</h2>
             <p style="margin-bottom: 20px; opacity: 0.9;">Combined performance metrics across all repositories</p>
-            
+
             <table class="dev-table">
                 <thead>
                     <tr>
@@ -1041,7 +1041,7 @@ def generate_html_report(prs_by_repo: Dict[str, List[Dict]], output_dir: str) ->
                     review_to_merge = f"{diff:.1f}h ({hours_to_days(diff):.1f}d)"
                 else:
                     review_to_merge = "N/A"
-                
+
                 html += f"""
                     <tr>
                         <td><strong>{author}</strong></td>
@@ -1056,30 +1056,30 @@ def generate_html_report(prs_by_repo: Dict[str, List[Dict]], output_dir: str) ->
             </table>
         </div>
 """
-        
+
         # Generate "All Repositories Combined" section
         html += generate_repo_section("All Repositories", all_prs, output_dir, is_combined=True, repo_index=0)
-    
+
     # Generate individual repository sections
     for idx, repo_name in enumerate(sorted(prs_by_repo.keys()), start=1):
         html += generate_repo_section(repo_name, prs_by_repo[repo_name], output_dir, is_combined=False, repo_index=idx)
-    
+
     html += """
     </div>
-    
+
     <script>
         // Accordion functionality
         document.querySelectorAll('.repo-header').forEach(header => {{
             header.addEventListener('click', () => {{
                 const content = header.nextElementSibling;
                 const icon = header.querySelector('.accordion-icon');
-                
+
                 // Toggle current section
                 content.classList.toggle('open');
                 icon.classList.toggle('open');
             }});
         }});
-        
+
         // Open first section by default
         const firstContent = document.querySelector('.repo-content');
         const firstIcon = document.querySelector('.accordion-icon');
