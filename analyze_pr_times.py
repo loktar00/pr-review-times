@@ -46,8 +46,9 @@ CHART_STYLE = 'seaborn-v0_8-darkgrid'
 OUTLIER_CAP_REVIEW_HOURS = 200
 OUTLIER_CAP_MERGE_HOURS = 500
 
-# Time periods for analysis
+# Time periods for analysis (ordered by time descending)
 TIME_PERIODS = {
+    "last_7_days": {"name": "Last 7 Days", "days": 7},
     "last_30_days": {"name": "Last 30 Days", "days": 30},
     "last_quarter": {"name": "Last Quarter", "days": 90},
     "overall": {"name": "Overall", "days": None}
@@ -579,29 +580,6 @@ def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_c
                 filtered_prs, period_key, period_info["name"], output_dir, repo_key
             )
 
-    # Generate per-developer chart for this repo
-    per_dev = calculate_per_developer_stats(prs)
-    dev_chart_file = None
-    if per_dev:
-        sorted_devs = sorted(per_dev.items(), key=lambda x: x[1]["pr_count"], reverse=True)
-        authors = [author for author, _ in sorted_devs]
-        review_times = [stats["avg_review_time"] or 0 for _, stats in sorted_devs]
-        merge_times = [stats["avg_merge_time"] or 0 for _, stats in sorted_devs]
-
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-        ax1.barh(authors, review_times, color='skyblue')
-        ax1.set_xlabel('Average Hours to First Review', fontsize=12)
-        ax1.set_title('Average Review Time by Developer', fontsize=14, fontweight='bold')
-        ax1.invert_yaxis()
-        ax2.barh(authors, merge_times, color='lightgreen')
-        ax2.set_xlabel('Average Hours to Merge', fontsize=12)
-        ax2.set_title('Average Merge Time by Developer', fontsize=14, fontweight='bold')
-        ax2.invert_yaxis()
-        plt.tight_layout()
-        dev_chart_file = f"{repo_key}_per_developer_stats.png"
-        plt.savefig(f"{output_dir}/{dev_chart_file}", dpi=CHART_DPI, bbox_inches='tight')
-        plt.close()
-
     # Build HTML section with accordion
     section_html = f"""
         <div class="repo-section" id="repo-{repo_index}">
@@ -615,14 +593,15 @@ def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_c
             <div class="repo-content">
 """
 
-    # Add time period sections
-    for period_key in ["overall", "last_quarter", "last_30_days"]:
+    # Add time period sections (ordered by time descending: weekly → 30 day → quarter → overall)
+    for period_key in ["last_7_days", "last_30_days", "last_quarter", "overall"]:
         if period_key not in period_stats:
             continue
 
         stats = period_stats[period_key]
         overall = stats["overall"]
         trends = stats["trends"]
+        per_dev_period = stats["per_dev"]
         name = stats["name"]
 
         section_html += f"""
@@ -722,59 +701,50 @@ def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_c
             </div>
 """
 
+        # Per-developer stats for this time period
+        if per_dev_period:
+            sorted_devs_period = sorted(per_dev_period.items(), key=lambda x: x[1]["pr_count"], reverse=True)
+
+            section_html += """
+            <h3>👥 Developer Performance</h3>
+            <table class="dev-table">
+                <thead>
+                    <tr>
+                        <th>Developer</th>
+                        <th>PRs</th>
+                        <th>Avg Review Time</th>
+                        <th>Avg Merge Time</th>
+                        <th>Avg Review → Merge</th>
+                    </tr>
+                </thead>
+                <tbody>
+"""
+            for author, dev_stats in sorted_devs_period:
+                review_time = f"{dev_stats['avg_review_time']:.1f}h ({hours_to_days(dev_stats['avg_review_time']):.1f}d)" if dev_stats['avg_review_time'] else "N/A"
+                merge_time = f"{dev_stats['avg_merge_time']:.1f}h ({hours_to_days(dev_stats['avg_merge_time']):.1f}d)" if dev_stats['avg_merge_time'] else "N/A"
+                review_to_merge = ""
+                if dev_stats['avg_review_time'] and dev_stats['avg_merge_time']:
+                    diff = dev_stats['avg_merge_time'] - dev_stats['avg_review_time']
+                    review_to_merge = f"{diff:.1f}h ({hours_to_days(diff):.1f}d)"
+                else:
+                    review_to_merge = "N/A"
+
+                section_html += f"""
+                    <tr>
+                        <td><strong>{author}</strong></td>
+                        <td>{dev_stats['pr_count']}</td>
+                        <td>{review_time}</td>
+                        <td>{merge_time}</td>
+                        <td>{review_to_merge}</td>
+                    </tr>
+"""
+            section_html += """
+                </tbody>
+            </table>
+"""
+
         section_html += """
         </div>
-"""
-
-    # Per-developer stats
-    if per_dev:
-        sorted_devs = sorted(per_dev.items(), key=lambda x: x[1]["pr_count"], reverse=True)
-
-        section_html += """
-        <h2>👥 Per Developer Statistics</h2>
-"""
-        if dev_chart_file:
-            section_html += f"""
-        <div class="chart-container">
-            <img src="{dev_chart_file}" alt="Per Developer Statistics">
-        </div>
-"""
-
-        section_html += """
-        <table class="dev-table">
-            <thead>
-                <tr>
-                    <th>Developer</th>
-                    <th>PRs</th>
-                    <th>Avg Review Time</th>
-                    <th>Avg Merge Time</th>
-                    <th>Avg Review → Merge</th>
-                </tr>
-            </thead>
-            <tbody>
-"""
-        for author, stats in sorted_devs:
-            review_time = f"{stats['avg_review_time']:.1f}h ({hours_to_days(stats['avg_review_time']):.1f}d)" if stats['avg_review_time'] else "N/A"
-            merge_time = f"{stats['avg_merge_time']:.1f}h ({hours_to_days(stats['avg_merge_time']):.1f}d)" if stats['avg_merge_time'] else "N/A"
-            review_to_merge = ""
-            if stats['avg_review_time'] and stats['avg_merge_time']:
-                diff = stats['avg_merge_time'] - stats['avg_review_time']
-                review_to_merge = f"{diff:.1f}h ({hours_to_days(diff):.1f}d)"
-            else:
-                review_to_merge = "N/A"
-
-            section_html += f"""
-                <tr>
-                    <td><strong>{author}</strong></td>
-                    <td>{stats['pr_count']}</td>
-                    <td>{review_time}</td>
-                    <td>{merge_time}</td>
-                    <td>{review_to_merge}</td>
-                </tr>
-"""
-        section_html += """
-            </tbody>
-        </table>
 """
 
     section_html += """
