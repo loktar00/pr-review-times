@@ -138,22 +138,69 @@
         }
         .repo-section {
             margin: 40px 0;
-            padding: 30px;
             background: white;
             border: 2px solid #e0e0e0;
             border-radius: 12px;
+            overflow: hidden;
+        }
+        .repo-header {
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        .repo-header:hover {
+            background: linear-gradient(135deg, #5568d3 0%, #65398b 100%);
+        }
+        .repo-header.combined {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .repo-header.combined:hover {
+            background: linear-gradient(135deg, #df82ea 0%, #e4465b 100%);
         }
         .repo-title {
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 2em;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 0;
         }
         .repo-meta {
-            color: #7f8c8d;
-            margin-bottom: 20px;
             font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        .accordion-icon {
+            font-size: 1.5em;
+            transition: transform 0.3s ease;
+        }
+        .accordion-icon.open {
+            transform: rotate(180deg);
+        }
+        .repo-content {
+            padding: 30px;
+            display: none;
+        }
+        .repo-content.open {
+            display: block;
+        }
+        .global-dev-stats {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            color: white;
+        }
+        .global-dev-stats h2 {
+            color: white;
+            border-left-color: white;
+            margin-top: 0;
+        }
+        .global-dev-stats .dev-table {
+            background: white;
+            color: #333;
         }
     </style>
 </head>
@@ -161,12 +208,86 @@
     <div class="container">
         <h1 style="border-bottom: 3px solid #e74c3c;">📊 PR Review Time Analysis Report</h1>
         <div class="report-meta">
-            Generated: 2025-10-27 19:33 UTC | Total Repositories: 2 | Total PRs: 50
+            Generated: 2025-10-27 19:54 UTC | Total Repositories: 2 | Total PRs: 50
         </div>
 
-        <div class="repo-section">
-            <h1 class="repo-title">📊 All Repositories Combined</h1>
-            <div class="repo-meta">Total PRs: 50</div>
+        <div class="global-dev-stats">
+            <h2>👥 Global Developer Statistics (All Repositories)</h2>
+            <p style="margin-bottom: 20px; opacity: 0.9;">Combined performance metrics across all repositories</p>
+            
+            <table class="dev-table">
+                <thead>
+                    <tr>
+                        <th>Developer</th>
+                        <th>Total PRs</th>
+                        <th>Avg Review Time</th>
+                        <th>Avg Merge Time</th>
+                        <th>Avg Review → Merge</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td><strong>john-backend</strong></td>
+                        <td>9</td>
+                        <td>1.3h (0.1d)</td>
+                        <td>8.7h (0.4d)</td>
+                        <td>7.3h (0.3d)</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>lisa-db</strong></td>
+                        <td>8</td>
+                        <td>1.2h (0.1d)</td>
+                        <td>6.4h (0.3d)</td>
+                        <td>5.1h (0.2d)</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>sarah-dev</strong></td>
+                        <td>8</td>
+                        <td>1.1h (0.0d)</td>
+                        <td>7.0h (0.3d)</td>
+                        <td>5.9h (0.2d)</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>mike-frontend</strong></td>
+                        <td>8</td>
+                        <td>0.8h (0.0d)</td>
+                        <td>7.0h (0.3d)</td>
+                        <td>6.2h (0.3d)</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>alex-ui</strong></td>
+                        <td>8</td>
+                        <td>1.1h (0.0d)</td>
+                        <td>6.0h (0.2d)</td>
+                        <td>4.9h (0.2d)</td>
+                    </tr>
+
+                    <tr>
+                        <td><strong>maria-api</strong></td>
+                        <td>7</td>
+                        <td>1.6h (0.1d)</td>
+                        <td>8.6h (0.4d)</td>
+                        <td>7.0h (0.3d)</td>
+                    </tr>
+
+                </tbody>
+            </table>
+        </div>
+
+        <div class="repo-section" id="repo-0">
+            <div class="repo-header combined">
+                <div>
+                    <div class="repo-title">📊 All Repositories Combined</div>
+                    <div class="repo-meta">Total PRs: 50</div>
+                </div>
+                <div class="accordion-icon">▼</div>
+            </div>
+            <div class="repo-content">
 
         <div class="period-section">
             <h2>Overall</h2>
@@ -450,11 +571,18 @@
             </tbody>
         </table>
 
+            </div>
         </div>
 
-        <div class="repo-section">
-            <h1 class="repo-title">📁 example-org/backend-api</h1>
-            <div class="repo-meta">Total PRs: 25</div>
+        <div class="repo-section" id="repo-1">
+            <div class="repo-header ">
+                <div>
+                    <div class="repo-title">📁 example-org/backend-api</div>
+                    <div class="repo-meta">Total PRs: 25</div>
+                </div>
+                <div class="accordion-icon">▼</div>
+            </div>
+            <div class="repo-content">
 
         <div class="period-section">
             <h2>Overall</h2>
@@ -714,11 +842,18 @@
             </tbody>
         </table>
 
+            </div>
         </div>
 
-        <div class="repo-section">
-            <h1 class="repo-title">📁 example-org/frontend-app</h1>
-            <div class="repo-meta">Total PRs: 25</div>
+        <div class="repo-section" id="repo-2">
+            <div class="repo-header ">
+                <div>
+                    <div class="repo-title">📁 example-org/frontend-app</div>
+                    <div class="repo-meta">Total PRs: 25</div>
+                </div>
+                <div class="accordion-icon">▼</div>
+            </div>
+            <div class="repo-content">
 
         <div class="period-section">
             <h2>Overall</h2>
@@ -978,8 +1113,31 @@
             </tbody>
         </table>
 
+            </div>
         </div>
 
     </div>
+    
+    <script>
+        // Accordion functionality
+        document.querySelectorAll('.repo-header').forEach(header => {{
+            header.addEventListener('click', () => {{
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('.accordion-icon');
+                
+                // Toggle current section
+                content.classList.toggle('open');
+                icon.classList.toggle('open');
+            }});
+        }});
+        
+        // Open first section by default
+        const firstContent = document.querySelector('.repo-content');
+        const firstIcon = document.querySelector('.accordion-icon');
+        if (firstContent) {{
+            firstContent.classList.add('open');
+            firstIcon.classList.add('open');
+        }}
+    </script>
 </body>
 </html>

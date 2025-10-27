@@ -392,6 +392,9 @@ def _create_histogram(ax, values, color, title, outlier_cap):
 
 def create_period_visualizations(prs: List[Dict], period_key: str, period_name: str, output_dir: str, repo_key: str = "") -> Dict[str, str]:
     """Create visualization charts for a specific time period and repository, return chart filenames."""
+    # Ensure output directory exists
+    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    
     chart_files = {}
 
     # Create safe filename prefix for repo
@@ -550,7 +553,7 @@ def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends:
     plt.close()
 
 
-def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_combined: bool = False) -> str:
+def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_combined: bool = False, repo_index: int = 0) -> str:
     """Generate HTML section for a single repository or combined view."""
     # Calculate stats for all time periods
     period_stats = {}
@@ -597,11 +600,17 @@ def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_c
         plt.savefig(f"{output_dir}/{dev_chart_file}", dpi=CHART_DPI, bbox_inches='tight')
         plt.close()
 
-    # Build HTML section
+    # Build HTML section with accordion
     section_html = f"""
-        <div class="repo-section">
-            <h1 class="repo-title">{"📊 All Repositories Combined" if is_combined else f"📁 {repo_name}"}</h1>
-            <div class="repo-meta">Total PRs: {len(prs)}</div>
+        <div class="repo-section" id="repo-{repo_index}">
+            <div class="repo-header {'combined' if is_combined else ''}">
+                <div>
+                    <div class="repo-title">{"📊 All Repositories Combined" if is_combined else f"📁 {repo_name}"}</div>
+                    <div class="repo-meta">Total PRs: {len(prs)}</div>
+                </div>
+                <div class="accordion-icon">▼</div>
+            </div>
+            <div class="repo-content">
 """
 
     # Add time period sections
@@ -767,6 +776,7 @@ def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_c
 """
 
     section_html += """
+            </div>
         </div>
 """
 
@@ -921,22 +931,69 @@ def generate_html_report(prs_by_repo: Dict[str, List[Dict]], output_dir: str) ->
         }}
         .repo-section {{
             margin: 40px 0;
-            padding: 30px;
             background: white;
             border: 2px solid #e0e0e0;
             border-radius: 12px;
+            overflow: hidden;
+        }}
+        .repo-header {{
+            padding: 20px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }}
+        .repo-header:hover {{
+            background: linear-gradient(135deg, #5568d3 0%, #65398b 100%);
+        }}
+        .repo-header.combined {{
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }}
+        .repo-header.combined:hover {{
+            background: linear-gradient(135deg, #df82ea 0%, #e4465b 100%);
         }}
         .repo-title {{
-            color: #2c3e50;
-            margin-bottom: 5px;
-            font-size: 2em;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
+            font-size: 1.8em;
+            font-weight: bold;
+            margin: 0;
         }}
         .repo-meta {{
-            color: #7f8c8d;
-            margin-bottom: 20px;
             font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }}
+        .accordion-icon {{
+            font-size: 1.5em;
+            transition: transform 0.3s ease;
+        }}
+        .accordion-icon.open {{
+            transform: rotate(180deg);
+        }}
+        .repo-content {{
+            padding: 30px;
+            display: none;
+        }}
+        .repo-content.open {{
+            display: block;
+        }}
+        .global-dev-stats {{
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            color: white;
+        }}
+        .global-dev-stats h2 {{
+            color: white;
+            border-left-color: white;
+            margin-top: 0;
+        }}
+        .global-dev-stats .dev-table {{
+            background: white;
+            color: #333;
         }}
     </style>
 </head>
@@ -948,19 +1005,89 @@ def generate_html_report(prs_by_repo: Dict[str, List[Dict]], output_dir: str) ->
         </div>
 """
 
-    # Generate "All Repositories Combined" section first if multiple repos
+    # Calculate global per-developer stats across all repositories
     if len(prs_by_repo) > 1:
         all_prs = []
         for prs in prs_by_repo.values():
             all_prs.extend(prs)
-        html += generate_repo_section("All Repositories", all_prs, output_dir, is_combined=True)
-
+        
+        global_dev_stats = calculate_per_developer_stats(all_prs)
+        if global_dev_stats:
+            sorted_devs = sorted(global_dev_stats.items(), key=lambda x: x[1]["pr_count"], reverse=True)
+            
+            html += """
+        <div class="global-dev-stats">
+            <h2>👥 Global Developer Statistics (All Repositories)</h2>
+            <p style="margin-bottom: 20px; opacity: 0.9;">Combined performance metrics across all repositories</p>
+            
+            <table class="dev-table">
+                <thead>
+                    <tr>
+                        <th>Developer</th>
+                        <th>Total PRs</th>
+                        <th>Avg Review Time</th>
+                        <th>Avg Merge Time</th>
+                        <th>Avg Review → Merge</th>
+                    </tr>
+                </thead>
+                <tbody>
+"""
+            for author, stats in sorted_devs:
+                review_time = f"{stats['avg_review_time']:.1f}h ({hours_to_days(stats['avg_review_time']):.1f}d)" if stats['avg_review_time'] else "N/A"
+                merge_time = f"{stats['avg_merge_time']:.1f}h ({hours_to_days(stats['avg_merge_time']):.1f}d)" if stats['avg_merge_time'] else "N/A"
+                review_to_merge = ""
+                if stats['avg_review_time'] and stats['avg_merge_time']:
+                    diff = stats['avg_merge_time'] - stats['avg_review_time']
+                    review_to_merge = f"{diff:.1f}h ({hours_to_days(diff):.1f}d)"
+                else:
+                    review_to_merge = "N/A"
+                
+                html += f"""
+                    <tr>
+                        <td><strong>{author}</strong></td>
+                        <td>{stats['pr_count']}</td>
+                        <td>{review_time}</td>
+                        <td>{merge_time}</td>
+                        <td>{review_to_merge}</td>
+                    </tr>
+"""
+            html += """
+                </tbody>
+            </table>
+        </div>
+"""
+        
+        # Generate "All Repositories Combined" section
+        html += generate_repo_section("All Repositories", all_prs, output_dir, is_combined=True, repo_index=0)
+    
     # Generate individual repository sections
-    for repo_name in sorted(prs_by_repo.keys()):
-        html += generate_repo_section(repo_name, prs_by_repo[repo_name], output_dir, is_combined=False)
-
+    for idx, repo_name in enumerate(sorted(prs_by_repo.keys()), start=1):
+        html += generate_repo_section(repo_name, prs_by_repo[repo_name], output_dir, is_combined=False, repo_index=idx)
+    
     html += """
     </div>
+    
+    <script>
+        // Accordion functionality
+        document.querySelectorAll('.repo-header').forEach(header => {{
+            header.addEventListener('click', () => {{
+                const content = header.nextElementSibling;
+                const icon = header.querySelector('.accordion-icon');
+                
+                // Toggle current section
+                content.classList.toggle('open');
+                icon.classList.toggle('open');
+            }});
+        }});
+        
+        // Open first section by default
+        const firstContent = document.querySelector('.repo-content');
+        const firstIcon = document.querySelector('.accordion-icon');
+        if (firstContent) {{
+            firstContent.classList.add('open');
+            firstIcon.classList.add('open');
+        }}
+    </script>
 </body>
 </html>
 """
