@@ -2,9 +2,9 @@
 
 Analyze pull request review performance across your GitHub repositories. Track review times, identify bottlenecks, and visualize trends with beautiful charts.
 
-## 🎯 [View Live Demo](./demo/report.html)
+## 🎯 [View Live Demo](https://loktar00.github.io/pr-review-times/report.html)
 
-See a fully-featured example report with sample data from two repositories. [Demo Documentation](./demo/README.md)
+See a fully-featured example report with sample data from two repositories. [Demo Documentation](https://loktar00.github.io/pr-review-times)
 
 ## What This Does
 
@@ -412,7 +412,7 @@ jobs:
 - **Multi-repo safe**: Each repo gets its own CSV file
 - **Reviews vs Comments**: "Time to first review" tracks submitted reviews, not PR comments
 - **Private repos**: Token needs `repo` scope (not just `public_repo`)
-- **Demo available**: Check out the [live demo](./demo/report.html) with sample data
+- **Demo available**: Check out the [live demo](https://loktar00.github.io/pr-review-times/report.html) with sample data
 
 ## License
 
