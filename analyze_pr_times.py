@@ -400,6 +400,9 @@ def create_period_visualizations(prs: List[Dict], period_key: str, period_name: 
     # Create safe filename prefix for repo
     repo_prefix = repo_key.replace("/", "_").replace(" ", "_") + "_" if repo_key else ""
 
+    # Title suffix for charts
+    title_suffix = f" - {period_name}" if period_name else ""
+
     # 1. Trends Over Time
     overall = calculate_overall_stats(prs)
     trends = analyze_trends(prs)
@@ -417,7 +420,6 @@ def create_period_visualizations(prs: List[Dict], period_key: str, period_name: 
             if trends.get("review_slope") is not None:
                 _add_trend_line(ax1, dates, review_times, trends["review_slope"])
             ax1.set_ylabel('Hours', fontsize=12)
-            title_suffix = f" - {period_name}" if period_name else ""
             ax1.set_title(f'Time to First Review{title_suffix}', fontsize=14, fontweight='bold')
             ax1.legend()
             _format_time_axis(ax1)
