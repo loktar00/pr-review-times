@@ -34,7 +34,8 @@ data/
 !demo_data/
 !demo_data/*.csv
 
-# Analytics output (but not demo output)
+# Generated report data (but keep index.html and demo)
+report/
 analytics/
 *_analysis/
 !demo/

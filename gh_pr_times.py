@@ -166,6 +166,22 @@ def fetch_reviews(session: requests.Session, token: str, owner: str, repo: str, 
         all_reviews.extend(batch)
     return all_reviews
 
+def fetch_issue_comments(session: requests.Session, token: str, owner: str, repo: str, pr_number: int, timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> List[Dict]:
+    """Fetch issue comments (comments on the PR conversation)."""
+    url = f"{API_ROOT}/repos/{owner}/{repo}/issues/{pr_number}/comments"
+    all_comments: List[Dict] = []
+    for batch in paginate(session, url, token, {}, timeout, sleep_s, retries):
+        all_comments.extend(batch)
+    return all_comments
+
+def fetch_review_comments(session: requests.Session, token: str, owner: str, repo: str, pr_number: int, timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> List[Dict]:
+    """Fetch review comments (inline code review comments)."""
+    url = f"{API_ROOT}/repos/{owner}/{repo}/pulls/{pr_number}/comments"
+    all_comments: List[Dict] = []
+    for batch in paginate(session, url, token, {}, timeout, sleep_s, retries):
+        all_comments.extend(batch)
+    return all_comments
+
 def fetch_prs(session: requests.Session, token: str, owner: str, repo: str, state: str, timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> Iterable[Dict]:
     url = f"{API_ROOT}/repos/{owner}/{repo}/pulls"
     params = {"state": state, "sort": "created", "direction": "desc"}
@@ -264,7 +280,8 @@ def main() -> None:
         "created_at", "closed_at", "merged_at",
         "additions", "deletions", "changed_files", "commits",
         "reviews_count", "first_review_at", "time_to_first_review_hours",
-        "time_to_merge_hours", "open_time_hours"
+        "time_to_merge_hours", "open_time_hours",
+        "comments_count", "comment_authors", "approvals_count", "approval_authors"
     ]
 
     for repo_full in args.repos:
@@ -377,6 +394,28 @@ def main() -> None:
                         except Exception:
                             first_review_at = None
 
+                    # Approvals (from reviews with state APPROVED)
+                    approvals = [r for r in reviews if r.get("state") == "APPROVED"]
+                    approvals_count = len(approvals)
+                    approval_authors = list(set((r.get("user") or {}).get("login") for r in approvals if (r.get("user") or {}).get("login")))
+                    approval_authors_str = ",".join(sorted(approval_authors))
+
+                    # Comments (both issue comments and review comments)
+                    issue_comments = fetch_issue_comments(session, token, owner, repo, pr_number, args.timeout, args.sleep, args.retries)
+                    review_comments = fetch_review_comments(session, token, owner, repo, pr_number, args.timeout, args.sleep, args.retries)
+                    all_comments = issue_comments + review_comments
+                    comments_count = len(all_comments)
+
+                    # Count comments per author
+                    comment_counts_by_author = {}
+                    for comment in all_comments:
+                        author_login = (comment.get("user") or {}).get("login")
+                        if author_login:
+                            comment_counts_by_author[author_login] = comment_counts_by_author.get(author_login, 0) + 1
+
+                    # Format as "author:count,author:count"
+                    comment_authors_str = ",".join(f"{author}:{count}" for author, count in sorted(comment_counts_by_author.items()))
+
                     time_to_first_review_hours = hours_between(created_at, first_review_at)
                     time_to_merge_hours = hours_between(created_at, merged_at)
                     open_time_hours = None
@@ -407,6 +446,10 @@ def main() -> None:
                         "time_to_first_review_hours": time_to_first_review_hours if time_to_first_review_hours is not None else "",
                         "time_to_merge_hours": time_to_merge_hours if time_to_merge_hours is not None else "",
                         "open_time_hours": open_time_hours if open_time_hours is not None else "",
+                        "comments_count": comments_count,
+                        "comment_authors": comment_authors_str,
+                        "approvals_count": approvals_count,
+                        "approval_authors": approval_authors_str,
                     }
                     csv_writer.writerow(row)
                     csv_file.flush()  # Ensure data is written to disk

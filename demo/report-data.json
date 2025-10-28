@@ -1,0 +1,2028 @@
+{
+  "meta": {
+    "generated_at": "2025-10-28 16:48 UTC",
+    "total_repositories": 2,
+    "total_prs": 50
+  },
+  "config": {
+    "pr_size_small": 200,
+    "pr_size_medium": 500
+  },
+  "time_periods": {
+    "last_7_days": {
+      "name": "Last 7 Days",
+      "days": 7
+    },
+    "last_30_days": {
+      "name": "Last 30 Days",
+      "days": 30
+    },
+    "last_quarter": {
+      "name": "Last Quarter",
+      "days": 90
+    },
+    "overall": {
+      "name": "Overall",
+      "days": null
+    }
+  },
+  "repositories": [
+    {
+      "repo_id": "overall",
+      "repo_name": "All Repositories",
+      "is_combined": true,
+      "total_prs": 50,
+      "period_stats": {
+        "last_7_days": {
+          "overall": {
+            "total_prs": 9,
+            "merged_prs": 9,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.5,
+            "median_review_time": 1.5,
+            "avg_merge_time": 7.555555555555555,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {},
+          "trends": {
+            "review_slope": -0.03214285714285714,
+            "merge_slope": -0.9571428571428569
+          },
+          "name": "Last 7 Days",
+          "pr_count": 9
+        },
+        "last_30_days": {
+          "overall": {
+            "total_prs": 50,
+            "merged_prs": 50,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.295,
+            "median_review_time": 1.5,
+            "avg_merge_time": 6.71,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "john-backend": {
+              "pr_count": 9,
+              "avg_review_time": 1.3333333333333333,
+              "avg_merge_time": 8.666666666666666
+            },
+            "lisa-db": {
+              "pr_count": 8,
+              "avg_review_time": 1.25,
+              "avg_merge_time": 6.375
+            },
+            "maria-api": {
+              "pr_count": 7,
+              "avg_review_time": 1.5714285714285714,
+              "avg_merge_time": 8.571428571428571
+            },
+            "sarah-dev": {
+              "pr_count": 8,
+              "avg_review_time": 1.125,
+              "avg_merge_time": 4.0
+            },
+            "mike-frontend": {
+              "pr_count": 8,
+              "avg_review_time": 1.5,
+              "avg_merge_time": 10.375
+            },
+            "alex-ui": {
+              "pr_count": 8,
+              "avg_review_time": 1.1875,
+              "avg_merge_time": 3.625
+            }
+          },
+          "trends": {
+            "review_slope": 0.009991760975003107,
+            "merge_slope": 0.09170967541350583
+          },
+          "name": "Last 30 Days",
+          "pr_count": 50
+        },
+        "last_quarter": {
+          "overall": {
+            "total_prs": 50,
+            "merged_prs": 50,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.295,
+            "median_review_time": 1.5,
+            "avg_merge_time": 6.71,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "john-backend": {
+              "pr_count": 9,
+              "avg_review_time": 1.3333333333333333,
+              "avg_merge_time": 8.666666666666666
+            },
+            "lisa-db": {
+              "pr_count": 8,
+              "avg_review_time": 1.25,
+              "avg_merge_time": 6.375
+            },
+            "maria-api": {
+              "pr_count": 7,
+              "avg_review_time": 1.5714285714285714,
+              "avg_merge_time": 8.571428571428571
+            },
+            "sarah-dev": {
+              "pr_count": 8,
+              "avg_review_time": 1.125,
+              "avg_merge_time": 4.0
+            },
+            "mike-frontend": {
+              "pr_count": 8,
+              "avg_review_time": 1.5,
+              "avg_merge_time": 10.375
+            },
+            "alex-ui": {
+              "pr_count": 8,
+              "avg_review_time": 1.1875,
+              "avg_merge_time": 3.625
+            }
+          },
+          "trends": {
+            "review_slope": 0.009991760975003107,
+            "merge_slope": 0.09170967541350583
+          },
+          "name": "Last Quarter",
+          "pr_count": 50
+        },
+        "overall": {
+          "overall": {
+            "total_prs": 50,
+            "merged_prs": 50,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.295,
+            "median_review_time": 1.5,
+            "avg_merge_time": 6.71,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "john-backend": {
+              "pr_count": 9,
+              "avg_review_time": 1.3333333333333333,
+              "avg_merge_time": 8.666666666666666
+            },
+            "lisa-db": {
+              "pr_count": 8,
+              "avg_review_time": 1.25,
+              "avg_merge_time": 6.375
+            },
+            "maria-api": {
+              "pr_count": 7,
+              "avg_review_time": 1.5714285714285714,
+              "avg_merge_time": 8.571428571428571
+            },
+            "sarah-dev": {
+              "pr_count": 8,
+              "avg_review_time": 1.125,
+              "avg_merge_time": 4.0
+            },
+            "mike-frontend": {
+              "pr_count": 8,
+              "avg_review_time": 1.5,
+              "avg_merge_time": 10.375
+            },
+            "alex-ui": {
+              "pr_count": 8,
+              "avg_review_time": 1.1875,
+              "avg_merge_time": 3.625
+            }
+          },
+          "trends": {
+            "review_slope": 0.009991760975003107,
+            "merge_slope": 0.09170967541350583
+          },
+          "name": "Overall",
+          "pr_count": 50
+        }
+      },
+      "period_charts": {
+        "last_7_days": {
+          "trends": "all_trends_last_7_days.png",
+          "distributions": "all_distributions_last_7_days.png"
+        },
+        "last_30_days": {
+          "trends": "all_trends_last_30_days.png",
+          "distributions": "all_distributions_last_30_days.png"
+        },
+        "last_quarter": {
+          "trends": "all_trends_last_quarter.png",
+          "distributions": "all_distributions_last_quarter.png"
+        },
+        "overall": {
+          "trends": "all_trends_overall.png",
+          "distributions": "all_distributions_overall.png"
+        }
+      }
+    },
+    {
+      "repo_id": "example-org_backend-api",
+      "repo_name": "example-org/backend-api",
+      "is_combined": false,
+      "total_prs": 25,
+      "period_stats": {
+        "last_7_days": {
+          "overall": {
+            "total_prs": 4,
+            "merged_prs": 4,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.5,
+            "median_review_time": 1.5,
+            "avg_merge_time": 10.75,
+            "median_merge_time": 6.0,
+            "avg_open_time": null
+          },
+          "per_dev": {},
+          "trends": {
+            "review_slope": 0.0,
+            "merge_slope": 0.0
+          },
+          "name": "Last 7 Days",
+          "pr_count": 4
+        },
+        "last_30_days": {
+          "overall": {
+            "total_prs": 25,
+            "merged_prs": 25,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.34,
+            "median_review_time": 1.5,
+            "avg_merge_time": 7.6,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "john-backend": {
+              "pr_count": 9,
+              "avg_review_time": 1.3333333333333333,
+              "avg_merge_time": 8.666666666666666
+            },
+            "lisa-db": {
+              "pr_count": 8,
+              "avg_review_time": 1.25,
+              "avg_merge_time": 6.375
+            },
+            "maria-api": {
+              "pr_count": 7,
+              "avg_review_time": 1.5714285714285714,
+              "avg_merge_time": 8.571428571428571
+            }
+          },
+          "trends": {
+            "review_slope": 0.005675094974154575,
+            "merge_slope": 0.24646571588715202
+          },
+          "name": "Last 30 Days",
+          "pr_count": 25
+        },
+        "last_quarter": {
+          "overall": {
+            "total_prs": 25,
+            "merged_prs": 25,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.34,
+            "median_review_time": 1.5,
+            "avg_merge_time": 7.6,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "john-backend": {
+              "pr_count": 9,
+              "avg_review_time": 1.3333333333333333,
+              "avg_merge_time": 8.666666666666666
+            },
+            "lisa-db": {
+              "pr_count": 8,
+              "avg_review_time": 1.25,
+              "avg_merge_time": 6.375
+            },
+            "maria-api": {
+              "pr_count": 7,
+              "avg_review_time": 1.5714285714285714,
+              "avg_merge_time": 8.571428571428571
+            }
+          },
+          "trends": {
+            "review_slope": 0.005675094974154575,
+            "merge_slope": 0.24646571588715202
+          },
+          "name": "Last Quarter",
+          "pr_count": 25
+        },
+        "overall": {
+          "overall": {
+            "total_prs": 25,
+            "merged_prs": 25,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.34,
+            "median_review_time": 1.5,
+            "avg_merge_time": 7.6,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "john-backend": {
+              "pr_count": 9,
+              "avg_review_time": 1.3333333333333333,
+              "avg_merge_time": 8.666666666666666
+            },
+            "lisa-db": {
+              "pr_count": 8,
+              "avg_review_time": 1.25,
+              "avg_merge_time": 6.375
+            },
+            "maria-api": {
+              "pr_count": 7,
+              "avg_review_time": 1.5714285714285714,
+              "avg_merge_time": 8.571428571428571
+            }
+          },
+          "trends": {
+            "review_slope": 0.005675094974154575,
+            "merge_slope": 0.24646571588715202
+          },
+          "name": "Overall",
+          "pr_count": 25
+        }
+      },
+      "period_charts": {
+        "last_7_days": {
+          "trends": "example-org_backend-api_trends_last_7_days.png",
+          "distributions": "example-org_backend-api_distributions_last_7_days.png"
+        },
+        "last_30_days": {
+          "trends": "example-org_backend-api_trends_last_30_days.png",
+          "distributions": "example-org_backend-api_distributions_last_30_days.png"
+        },
+        "last_quarter": {
+          "trends": "example-org_backend-api_trends_last_quarter.png",
+          "distributions": "example-org_backend-api_distributions_last_quarter.png"
+        },
+        "overall": {
+          "trends": "example-org_backend-api_trends_overall.png",
+          "distributions": "example-org_backend-api_distributions_overall.png"
+        }
+      }
+    },
+    {
+      "repo_id": "example-org_frontend-app",
+      "repo_name": "example-org/frontend-app",
+      "is_combined": false,
+      "total_prs": 25,
+      "period_stats": {
+        "last_7_days": {
+          "overall": {
+            "total_prs": 5,
+            "merged_prs": 5,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.5,
+            "median_review_time": 1.5,
+            "avg_merge_time": 5.0,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {},
+          "trends": {
+            "review_slope": 0.0,
+            "merge_slope": 0.2
+          },
+          "name": "Last 7 Days",
+          "pr_count": 5
+        },
+        "last_30_days": {
+          "overall": {
+            "total_prs": 25,
+            "merged_prs": 25,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.25,
+            "median_review_time": 1.5,
+            "avg_merge_time": 5.82,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "sarah-dev": {
+              "pr_count": 8,
+              "avg_review_time": 1.125,
+              "avg_merge_time": 4.0
+            },
+            "mike-frontend": {
+              "pr_count": 8,
+              "avg_review_time": 1.5,
+              "avg_merge_time": 10.375
+            },
+            "alex-ui": {
+              "pr_count": 8,
+              "avg_review_time": 1.1875,
+              "avg_merge_time": 3.625
+            }
+          },
+          "trends": {
+            "review_slope": 0.01435832074521651,
+            "merge_slope": -0.070210221550856
+          },
+          "name": "Last 30 Days",
+          "pr_count": 25
+        },
+        "last_quarter": {
+          "overall": {
+            "total_prs": 25,
+            "merged_prs": 25,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.25,
+            "median_review_time": 1.5,
+            "avg_merge_time": 5.82,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "sarah-dev": {
+              "pr_count": 8,
+              "avg_review_time": 1.125,
+              "avg_merge_time": 4.0
+            },
+            "mike-frontend": {
+              "pr_count": 8,
+              "avg_review_time": 1.5,
+              "avg_merge_time": 10.375
+            },
+            "alex-ui": {
+              "pr_count": 8,
+              "avg_review_time": 1.1875,
+              "avg_merge_time": 3.625
+            }
+          },
+          "trends": {
+            "review_slope": 0.01435832074521651,
+            "merge_slope": -0.070210221550856
+          },
+          "name": "Last Quarter",
+          "pr_count": 25
+        },
+        "overall": {
+          "overall": {
+            "total_prs": 25,
+            "merged_prs": 25,
+            "closed_not_merged_prs": 0,
+            "open_prs": 0,
+            "avg_review_time": 1.25,
+            "median_review_time": 1.5,
+            "avg_merge_time": 5.82,
+            "median_merge_time": 5.0,
+            "avg_open_time": null
+          },
+          "per_dev": {
+            "sarah-dev": {
+              "pr_count": 8,
+              "avg_review_time": 1.125,
+              "avg_merge_time": 4.0
+            },
+            "mike-frontend": {
+              "pr_count": 8,
+              "avg_review_time": 1.5,
+              "avg_merge_time": 10.375
+            },
+            "alex-ui": {
+              "pr_count": 8,
+              "avg_review_time": 1.1875,
+              "avg_merge_time": 3.625
+            }
+          },
+          "trends": {
+            "review_slope": 0.01435832074521651,
+            "merge_slope": -0.070210221550856
+          },
+          "name": "Overall",
+          "pr_count": 25
+        }
+      },
+      "period_charts": {
+        "last_7_days": {
+          "trends": "example-org_frontend-app_trends_last_7_days.png",
+          "distributions": "example-org_frontend-app_distributions_last_7_days.png"
+        },
+        "last_30_days": {
+          "trends": "example-org_frontend-app_trends_last_30_days.png",
+          "distributions": "example-org_frontend-app_distributions_last_30_days.png"
+        },
+        "last_quarter": {
+          "trends": "example-org_frontend-app_trends_last_quarter.png",
+          "distributions": "example-org_frontend-app_distributions_last_quarter.png"
+        },
+        "overall": {
+          "trends": "example-org_frontend-app_trends_overall.png",
+          "distributions": "example-org_frontend-app_distributions_overall.png"
+        }
+      }
+    }
+  ],
+  "raw_prs": {
+    "example-org/backend-api": [
+      {
+        "repo": "example-org/backend-api",
+        "number": "89",
+        "title": "Add rate limiting middleware",
+        "url": "https://github.com/example-org/backend-api/pull/89",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-25T10:00:00+00:00",
+        "closed_at": "2025-10-25T16:00:00+00:00",
+        "merged_at": "2025-10-25T16:00:00+00:00",
+        "additions": "156",
+        "deletions": "34",
+        "changed_files": "8",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-25T11:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "5",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "lisa-db:2",
+        "approval_authors": "maria-api:2",
+        "null": [
+          "2",
+          "lisa-db",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "88",
+        "title": "Fix database connection pool leak",
+        "url": "https://github.com/example-org/backend-api/pull/88",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-24T09:00:00+00:00",
+        "closed_at": "2025-10-24T14:00:00+00:00",
+        "merged_at": "2025-10-24T14:00:00+00:00",
+        "additions": "67",
+        "deletions": "45",
+        "changed_files": "5",
+        "commits": "3",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-24T10:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "8",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:4",
+        "approval_authors": "maria-api:3",
+        "null": [
+          "2",
+          "john-backend",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "87",
+        "title": "Implement OAuth2 authentication",
+        "url": "https://github.com/example-org/backend-api/pull/87",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-23T13:00:00+00:00",
+        "closed_at": "2025-10-24T15:00:00+00:00",
+        "merged_at": "2025-10-24T15:00:00+00:00",
+        "additions": "345",
+        "deletions": "123",
+        "changed_files": "18",
+        "commits": "12",
+        "reviews_count": "5",
+        "first_review_at": "2025-10-23T15:00:00+00:00",
+        "time_to_first_review_hours": "2.0",
+        "time_to_merge_hours": "26.0",
+        "open_time_hours": "",
+        "comments_count": "15",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "lisa-db:6",
+        "approval_authors": "maria-api:5",
+        "null": [
+          "tech-lead:2",
+          "3",
+          "lisa-db",
+          "maria-api",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "86",
+        "title": "Add caching layer for API responses",
+        "url": "https://github.com/example-org/backend-api/pull/86",
+        "author": "maria-api",
+        "draft": "False",
+        "created_at": "2025-10-22T11:00:00+00:00",
+        "closed_at": "2025-10-22T17:00:00+00:00",
+        "merged_at": "2025-10-22T17:00:00+00:00",
+        "additions": "234",
+        "deletions": "89",
+        "changed_files": "12",
+        "commits": "7",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-22T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "9",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:4",
+        "approval_authors": "lisa-db:4",
+        "null": [
+          "2",
+          "john-backend",
+          "lisa-db"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "85",
+        "title": "Update dependencies",
+        "url": "https://github.com/example-org/backend-api/pull/85",
+        "author": "dependabot[bot]",
+        "draft": "False",
+        "created_at": "2025-10-21T08:00:00+00:00",
+        "closed_at": "2025-10-21T09:00:00+00:00",
+        "merged_at": "2025-10-21T09:00:00+00:00",
+        "additions": "178",
+        "deletions": "145",
+        "changed_files": "15",
+        "commits": "1",
+        "reviews_count": "1",
+        "first_review_at": "2025-10-21T08:30:00+00:00",
+        "time_to_first_review_hours": "0.5",
+        "time_to_merge_hours": "1.0",
+        "open_time_hours": "",
+        "comments_count": "1",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "1",
+        "approval_authors": "john-backend"
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "84",
+        "title": "Optimize database queries",
+        "url": "https://github.com/example-org/backend-api/pull/84",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-20T14:00:00+00:00",
+        "closed_at": "2025-10-21T10:00:00+00:00",
+        "merged_at": "2025-10-21T10:00:00+00:00",
+        "additions": "89",
+        "deletions": "67",
+        "changed_files": "9",
+        "commits": "5",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-20T15:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "20.0",
+        "open_time_hours": "",
+        "comments_count": "12",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:6",
+        "approval_authors": "maria-api:5",
+        "null": [
+          "3",
+          "john-backend",
+          "maria-api",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "83",
+        "title": "Add logging for audit trail",
+        "url": "https://github.com/example-org/backend-api/pull/83",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-19T10:00:00+00:00",
+        "closed_at": "2025-10-19T15:00:00+00:00",
+        "merged_at": "2025-10-19T15:00:00+00:00",
+        "additions": "123",
+        "deletions": "34",
+        "changed_files": "7",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-19T11:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "4",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "lisa-db:2",
+        "approval_authors": "maria-api:1",
+        "null": [
+          "2",
+          "lisa-db",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "82",
+        "title": "Fix race condition in job queue",
+        "url": "https://github.com/example-org/backend-api/pull/82",
+        "author": "maria-api",
+        "draft": "False",
+        "created_at": "2025-10-18T13:00:00+00:00",
+        "closed_at": "2025-10-18T18:00:00+00:00",
+        "merged_at": "2025-10-18T18:00:00+00:00",
+        "additions": "78",
+        "deletions": "56",
+        "changed_files": "6",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-18T14:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "7",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:3",
+        "approval_authors": "lisa-db:3",
+        "null": [
+          "2",
+          "john-backend",
+          "lisa-db"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "81",
+        "title": "Implement WebSocket support",
+        "url": "https://github.com/example-org/backend-api/pull/81",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-17T09:00:00+00:00",
+        "closed_at": "2025-10-18T11:00:00+00:00",
+        "merged_at": "2025-10-18T11:00:00+00:00",
+        "additions": "456",
+        "deletions": "123",
+        "changed_files": "22",
+        "commits": "15",
+        "reviews_count": "6",
+        "first_review_at": "2025-10-17T11:00:00+00:00",
+        "time_to_first_review_hours": "2.0",
+        "time_to_merge_hours": "26.0",
+        "open_time_hours": "",
+        "comments_count": "18",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "lisa-db:7",
+        "approval_authors": "maria-api:6",
+        "null": [
+          "tech-lead:3",
+          "3",
+          "lisa-db",
+          "maria-api",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "80",
+        "title": "Add health check endpoints",
+        "url": "https://github.com/example-org/backend-api/pull/80",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-16T11:00:00+00:00",
+        "closed_at": "2025-10-16T14:00:00+00:00",
+        "merged_at": "2025-10-16T14:00:00+00:00",
+        "additions": "67",
+        "deletions": "23",
+        "changed_files": "4",
+        "commits": "3",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-16T12:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "3.0",
+        "open_time_hours": "",
+        "comments_count": "3",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:1",
+        "approval_authors": "maria-api:1",
+        "null": [
+          "2",
+          "john-backend",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "79",
+        "title": "Refactor error handling",
+        "url": "https://github.com/example-org/backend-api/pull/79",
+        "author": "maria-api",
+        "draft": "False",
+        "created_at": "2025-10-15T10:00:00+00:00",
+        "closed_at": "2025-10-15T16:00:00+00:00",
+        "merged_at": "2025-10-15T16:00:00+00:00",
+        "additions": "145",
+        "deletions": "98",
+        "changed_files": "11",
+        "commits": "6",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-15T11:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "10",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:5",
+        "approval_authors": "lisa-db:4",
+        "null": [
+          "2",
+          "john-backend",
+          "lisa-db"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "78",
+        "title": "Add request validation middleware",
+        "url": "https://github.com/example-org/backend-api/pull/78",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-14T14:00:00+00:00",
+        "closed_at": "2025-10-14T19:00:00+00:00",
+        "merged_at": "2025-10-14T19:00:00+00:00",
+        "additions": "123",
+        "deletions": "45",
+        "changed_files": "8",
+        "commits": "5",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-14T15:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "6",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "lisa-db:3",
+        "approval_authors": "maria-api:2",
+        "null": [
+          "2",
+          "lisa-db",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "77",
+        "title": "Fix memory leak in worker process",
+        "url": "https://github.com/example-org/backend-api/pull/77",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-13T09:00:00+00:00",
+        "closed_at": "2025-10-13T13:00:00+00:00",
+        "merged_at": "2025-10-13T13:00:00+00:00",
+        "additions": "56",
+        "deletions": "34",
+        "changed_files": "5",
+        "commits": "3",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-13T10:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "4",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:2",
+        "approval_authors": "maria-api:1",
+        "null": [
+          "2",
+          "john-backend",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "76",
+        "title": "Implement file upload handling",
+        "url": "https://github.com/example-org/backend-api/pull/76",
+        "author": "maria-api",
+        "draft": "False",
+        "created_at": "2025-10-12T11:00:00+00:00",
+        "closed_at": "2025-10-12T17:00:00+00:00",
+        "merged_at": "2025-10-12T17:00:00+00:00",
+        "additions": "234",
+        "deletions": "67",
+        "changed_files": "13",
+        "commits": "8",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-12T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "11",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:5",
+        "approval_authors": "lisa-db:5",
+        "null": [
+          "3",
+          "john-backend",
+          "lisa-db",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "75",
+        "title": "Add database migrations",
+        "url": "https://github.com/example-org/backend-api/pull/75",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-11T10:00:00+00:00",
+        "closed_at": "2025-10-11T15:00:00+00:00",
+        "merged_at": "2025-10-11T15:00:00+00:00",
+        "additions": "345",
+        "deletions": "123",
+        "changed_files": "16",
+        "commits": "10",
+        "reviews_count": "4",
+        "first_review_at": "2025-10-11T11:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "13",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "john-backend:6",
+        "approval_authors": "maria-api:5",
+        "null": [
+          "2",
+          "john-backend",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "74",
+        "title": "Optimize JSON serialization",
+        "url": "https://github.com/example-org/backend-api/pull/74",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-10T13:00:00+00:00",
+        "closed_at": "2025-10-10T17:00:00+00:00",
+        "merged_at": "2025-10-10T17:00:00+00:00",
+        "additions": "89",
+        "deletions": "56",
+        "changed_files": "7",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-10T14:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "5",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "lisa-db:2",
+        "approval_authors": "maria-api:2",
+        "null": [
+          "2",
+          "lisa-db",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "73",
+        "title": "Add API versioning",
+        "url": "https://github.com/example-org/backend-api/pull/73",
+        "author": "maria-api",
+        "draft": "False",
+        "created_at": "2025-10-09T09:00:00+00:00",
+        "closed_at": "2025-10-09T14:00:00+00:00",
+        "merged_at": "2025-10-09T14:00:00+00:00",
+        "additions": "178",
+        "deletions": "89",
+        "changed_files": "12",
+        "commits": "7",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-09T10:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "8",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:4",
+        "approval_authors": "lisa-db:3",
+        "null": [
+          "2",
+          "john-backend",
+          "lisa-db"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "72",
+        "title": "Fix CORS configuration",
+        "url": "https://github.com/example-org/backend-api/pull/72",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-08T14:00:00+00:00",
+        "closed_at": "2025-10-08T16:00:00+00:00",
+        "merged_at": "2025-10-08T16:00:00+00:00",
+        "additions": "34",
+        "deletions": "23",
+        "changed_files": "3",
+        "commits": "2",
+        "reviews_count": "1",
+        "first_review_at": "2025-10-08T14:45:00+00:00",
+        "time_to_first_review_hours": "0.75",
+        "time_to_merge_hours": "2.0",
+        "open_time_hours": "",
+        "comments_count": "2",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "lisa-db:1",
+        "approval_authors": "1",
+        "null": [
+          "lisa-db"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "71",
+        "title": "Implement pagination for large datasets",
+        "url": "https://github.com/example-org/backend-api/pull/71",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-07T10:00:00+00:00",
+        "closed_at": "2025-10-07T16:00:00+00:00",
+        "merged_at": "2025-10-07T16:00:00+00:00",
+        "additions": "156",
+        "deletions": "67",
+        "changed_files": "10",
+        "commits": "6",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-07T11:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "9",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:4",
+        "approval_authors": "maria-api:4",
+        "null": [
+          "2",
+          "john-backend",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "70",
+        "title": "Add background job processing",
+        "url": "https://github.com/example-org/backend-api/pull/70",
+        "author": "maria-api",
+        "draft": "False",
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "closed_at": "2025-10-07T13:00:00+00:00",
+        "merged_at": "2025-10-07T13:00:00+00:00",
+        "additions": "456",
+        "deletions": "178",
+        "changed_files": "19",
+        "commits": "14",
+        "reviews_count": "5",
+        "first_review_at": "2025-10-06T13:00:00+00:00",
+        "time_to_first_review_hours": "2.0",
+        "time_to_merge_hours": "26.0",
+        "open_time_hours": "",
+        "comments_count": "20",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "john-backend:8",
+        "approval_authors": "lisa-db:7",
+        "null": [
+          "tech-lead:3",
+          "3",
+          "john-backend",
+          "lisa-db",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "69",
+        "title": "Fix SQL injection vulnerability",
+        "url": "https://github.com/example-org/backend-api/pull/69",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-05T15:00:00+00:00",
+        "closed_at": "2025-10-05T17:00:00+00:00",
+        "merged_at": "2025-10-05T17:00:00+00:00",
+        "additions": "45",
+        "deletions": "34",
+        "changed_files": "4",
+        "commits": "3",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-05T15:45:00+00:00",
+        "time_to_first_review_hours": "0.75",
+        "time_to_merge_hours": "2.0",
+        "open_time_hours": "",
+        "comments_count": "3",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "lisa-db:1",
+        "approval_authors": "maria-api:1",
+        "null": [
+          "2",
+          "lisa-db",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "68",
+        "title": "Add unit tests for auth module",
+        "url": "https://github.com/example-org/backend-api/pull/68",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-04T09:00:00+00:00",
+        "closed_at": "2025-10-04T13:00:00+00:00",
+        "merged_at": "2025-10-04T13:00:00+00:00",
+        "additions": "345",
+        "deletions": "89",
+        "changed_files": "14",
+        "commits": "8",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-04T10:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "12",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:6",
+        "approval_authors": "maria-api:5",
+        "null": [
+          "2",
+          "john-backend",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "67",
+        "title": "Implement email notification service",
+        "url": "https://github.com/example-org/backend-api/pull/67",
+        "author": "maria-api",
+        "draft": "False",
+        "created_at": "2025-10-03T11:00:00+00:00",
+        "closed_at": "2025-10-03T17:00:00+00:00",
+        "merged_at": "2025-10-03T17:00:00+00:00",
+        "additions": "234",
+        "deletions": "123",
+        "changed_files": "15",
+        "commits": "9",
+        "reviews_count": "4",
+        "first_review_at": "2025-10-03T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "14",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "john-backend:6",
+        "approval_authors": "lisa-db:6",
+        "null": [
+          "3",
+          "john-backend",
+          "lisa-db",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "66",
+        "title": "Fix timezone handling",
+        "url": "https://github.com/example-org/backend-api/pull/66",
+        "author": "john-backend",
+        "draft": "False",
+        "created_at": "2025-10-02T13:00:00+00:00",
+        "closed_at": "2025-10-02T15:00:00+00:00",
+        "merged_at": "2025-10-02T15:00:00+00:00",
+        "additions": "67",
+        "deletions": "45",
+        "changed_files": "6",
+        "commits": "3",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-02T14:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "2.0",
+        "open_time_hours": "",
+        "comments_count": "4",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "lisa-db:2",
+        "approval_authors": "maria-api:1",
+        "null": [
+          "2",
+          "lisa-db",
+          "maria-api"
+        ]
+      },
+      {
+        "repo": "example-org/backend-api",
+        "number": "65",
+        "title": "Add API documentation",
+        "url": "https://github.com/example-org/backend-api/pull/65",
+        "author": "lisa-db",
+        "draft": "False",
+        "created_at": "2025-10-01T10:00:00+00:00",
+        "closed_at": "2025-10-01T14:00:00+00:00",
+        "merged_at": "2025-10-01T14:00:00+00:00",
+        "additions": "156",
+        "deletions": "34",
+        "changed_files": "8",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-01T11:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "6",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "john-backend:3",
+        "approval_authors": "maria-api:2",
+        "null": [
+          "2",
+          "john-backend",
+          "maria-api"
+        ]
+      }
+    ],
+    "example-org/frontend-app": [
+      {
+        "repo": "example-org/frontend-app",
+        "number": "145",
+        "title": "Redesign user dashboard",
+        "url": "https://github.com/example-org/frontend-app/pull/145",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-26T09:00:00+00:00",
+        "closed_at": "2025-10-26T15:00:00+00:00",
+        "merged_at": "2025-10-26T15:00:00+00:00",
+        "additions": "423",
+        "deletions": "234",
+        "changed_files": "25",
+        "commits": "12",
+        "reviews_count": "4",
+        "first_review_at": "2025-10-26T10:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "16",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "alex-ui:7",
+        "approval_authors": "mike-frontend:7",
+        "null": [
+          "3",
+          "alex-ui",
+          "mike-frontend",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "144",
+        "title": "Fix mobile responsive issues",
+        "url": "https://github.com/example-org/frontend-app/pull/144",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-25T11:00:00+00:00",
+        "closed_at": "2025-10-25T16:00:00+00:00",
+        "merged_at": "2025-10-25T16:00:00+00:00",
+        "additions": "178",
+        "deletions": "123",
+        "changed_files": "14",
+        "commits": "7",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-25T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "10",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:5",
+        "approval_authors": "sarah-dev:4",
+        "null": [
+          "2",
+          "alex-ui",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "143",
+        "title": "Add dark mode toggle",
+        "url": "https://github.com/example-org/frontend-app/pull/143",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-24T13:00:00+00:00",
+        "closed_at": "2025-10-24T17:00:00+00:00",
+        "merged_at": "2025-10-24T17:00:00+00:00",
+        "additions": "234",
+        "deletions": "145",
+        "changed_files": "18",
+        "commits": "9",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-24T14:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "12",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "mike-frontend:6",
+        "approval_authors": "sarah-dev:5",
+        "null": [
+          "2",
+          "mike-frontend",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "142",
+        "title": "Optimize bundle size",
+        "url": "https://github.com/example-org/frontend-app/pull/142",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-23T10:00:00+00:00",
+        "closed_at": "2025-10-23T15:00:00+00:00",
+        "merged_at": "2025-10-23T15:00:00+00:00",
+        "additions": "89",
+        "deletions": "156",
+        "changed_files": "11",
+        "commits": "5",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-23T11:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "7",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:3",
+        "approval_authors": "mike-frontend:3",
+        "null": [
+          "2",
+          "alex-ui",
+          "mike-frontend"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "141",
+        "title": "Implement infinite scroll",
+        "url": "https://github.com/example-org/frontend-app/pull/141",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-22T09:00:00+00:00",
+        "closed_at": "2025-10-22T14:00:00+00:00",
+        "merged_at": "2025-10-22T14:00:00+00:00",
+        "additions": "156",
+        "deletions": "78",
+        "changed_files": "12",
+        "commits": "6",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-22T10:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "9",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:4",
+        "approval_authors": "sarah-dev:4",
+        "null": [
+          "2",
+          "alex-ui",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "140",
+        "title": "Update React to v18",
+        "url": "https://github.com/example-org/frontend-app/pull/140",
+        "author": "dependabot[bot]",
+        "draft": "False",
+        "created_at": "2025-10-21T08:00:00+00:00",
+        "closed_at": "2025-10-21T09:30:00+00:00",
+        "merged_at": "2025-10-21T09:30:00+00:00",
+        "additions": "267",
+        "deletions": "189",
+        "changed_files": "22",
+        "commits": "1",
+        "reviews_count": "1",
+        "first_review_at": "2025-10-21T08:45:00+00:00",
+        "time_to_first_review_hours": "0.75",
+        "time_to_merge_hours": "1.5",
+        "open_time_hours": "",
+        "comments_count": "2",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "sarah-dev:1",
+        "approval_authors": "1",
+        "null": [
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "139",
+        "title": "Add loading skeletons",
+        "url": "https://github.com/example-org/frontend-app/pull/139",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-20T11:00:00+00:00",
+        "closed_at": "2025-10-20T16:00:00+00:00",
+        "merged_at": "2025-10-20T16:00:00+00:00",
+        "additions": "145",
+        "deletions": "67",
+        "changed_files": "13",
+        "commits": "7",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-20T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "8",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "mike-frontend:4",
+        "approval_authors": "sarah-dev:3",
+        "null": [
+          "2",
+          "mike-frontend",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "138",
+        "title": "Fix memory leak in chart component",
+        "url": "https://github.com/example-org/frontend-app/pull/138",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-19T10:00:00+00:00",
+        "closed_at": "2025-10-19T14:00:00+00:00",
+        "merged_at": "2025-10-19T14:00:00+00:00",
+        "additions": "67",
+        "deletions": "45",
+        "changed_files": "5",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-19T11:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "5",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:2",
+        "approval_authors": "mike-frontend:2",
+        "null": [
+          "2",
+          "alex-ui",
+          "mike-frontend"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "137",
+        "title": "Implement accessibility improvements",
+        "url": "https://github.com/example-org/frontend-app/pull/137",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-18T13:00:00+00:00",
+        "closed_at": "2025-10-18T18:00:00+00:00",
+        "merged_at": "2025-10-18T18:00:00+00:00",
+        "additions": "234",
+        "deletions": "123",
+        "changed_files": "16",
+        "commits": "9",
+        "reviews_count": "4",
+        "first_review_at": "2025-10-18T14:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "14",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "alex-ui:6",
+        "approval_authors": "sarah-dev:6",
+        "null": [
+          "3",
+          "alex-ui",
+          "sarah-dev",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "136",
+        "title": "Add user preferences page",
+        "url": "https://github.com/example-org/frontend-app/pull/136",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-17T09:00:00+00:00",
+        "closed_at": "2025-10-17T15:00:00+00:00",
+        "merged_at": "2025-10-17T15:00:00+00:00",
+        "additions": "345",
+        "deletions": "178",
+        "changed_files": "19",
+        "commits": "11",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-17T10:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "11",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "mike-frontend:5",
+        "approval_authors": "sarah-dev:5",
+        "null": [
+          "2",
+          "mike-frontend",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "135",
+        "title": "Fix form validation bugs",
+        "url": "https://github.com/example-org/frontend-app/pull/135",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-16T11:00:00+00:00",
+        "closed_at": "2025-10-16T14:00:00+00:00",
+        "merged_at": "2025-10-16T14:00:00+00:00",
+        "additions": "89",
+        "deletions": "56",
+        "changed_files": "8",
+        "commits": "5",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-16T12:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "3.0",
+        "open_time_hours": "",
+        "comments_count": "6",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:3",
+        "approval_authors": "mike-frontend:2",
+        "null": [
+          "2",
+          "alex-ui",
+          "mike-frontend"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "134",
+        "title": "Implement real-time notifications",
+        "url": "https://github.com/example-org/frontend-app/pull/134",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-15T10:00:00+00:00",
+        "closed_at": "2025-10-16T12:00:00+00:00",
+        "merged_at": "2025-10-16T12:00:00+00:00",
+        "additions": "456",
+        "deletions": "234",
+        "changed_files": "22",
+        "commits": "14",
+        "reviews_count": "5",
+        "first_review_at": "2025-10-15T11:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "26.0",
+        "open_time_hours": "",
+        "comments_count": "18",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "alex-ui:8",
+        "approval_authors": "sarah-dev:8",
+        "null": [
+          "3",
+          "alex-ui",
+          "sarah-dev",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "133",
+        "title": "Add image optimization",
+        "url": "https://github.com/example-org/frontend-app/pull/133",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-14T14:00:00+00:00",
+        "closed_at": "2025-10-14T17:00:00+00:00",
+        "merged_at": "2025-10-14T17:00:00+00:00",
+        "additions": "123",
+        "deletions": "89",
+        "changed_files": "10",
+        "commits": "6",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-14T15:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "3.0",
+        "open_time_hours": "",
+        "comments_count": "7",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "mike-frontend:3",
+        "approval_authors": "sarah-dev:3",
+        "null": [
+          "2",
+          "mike-frontend",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "132",
+        "title": "Fix CSS specificity issues",
+        "url": "https://github.com/example-org/frontend-app/pull/132",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-13T09:00:00+00:00",
+        "closed_at": "2025-10-13T12:00:00+00:00",
+        "merged_at": "2025-10-13T12:00:00+00:00",
+        "additions": "56",
+        "deletions": "34",
+        "changed_files": "6",
+        "commits": "3",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-13T10:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "3.0",
+        "open_time_hours": "",
+        "comments_count": "4",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:2",
+        "approval_authors": "mike-frontend:1",
+        "null": [
+          "2",
+          "alex-ui",
+          "mike-frontend"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "131",
+        "title": "Implement drag and drop",
+        "url": "https://github.com/example-org/frontend-app/pull/131",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-12T11:00:00+00:00",
+        "closed_at": "2025-10-12T17:00:00+00:00",
+        "merged_at": "2025-10-12T17:00:00+00:00",
+        "additions": "278",
+        "deletions": "145",
+        "changed_files": "15",
+        "commits": "10",
+        "reviews_count": "4",
+        "first_review_at": "2025-10-12T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "6.0",
+        "open_time_hours": "",
+        "comments_count": "13",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:6",
+        "approval_authors": "sarah-dev:6",
+        "null": [
+          "2",
+          "alex-ui",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "130",
+        "title": "Add animation transitions",
+        "url": "https://github.com/example-org/frontend-app/pull/130",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-11T10:00:00+00:00",
+        "closed_at": "2025-10-11T15:00:00+00:00",
+        "merged_at": "2025-10-11T15:00:00+00:00",
+        "additions": "189",
+        "deletions": "98",
+        "changed_files": "12",
+        "commits": "7",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-11T11:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "9",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "mike-frontend:4",
+        "approval_authors": "sarah-dev:4",
+        "null": [
+          "2",
+          "mike-frontend",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "129",
+        "title": "Fix browser compatibility",
+        "url": "https://github.com/example-org/frontend-app/pull/129",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-10T13:00:00+00:00",
+        "closed_at": "2025-10-10T16:00:00+00:00",
+        "merged_at": "2025-10-10T16:00:00+00:00",
+        "additions": "67",
+        "deletions": "45",
+        "changed_files": "7",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-10T14:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "3.0",
+        "open_time_hours": "",
+        "comments_count": "5",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:2",
+        "approval_authors": "mike-frontend:2",
+        "null": [
+          "2",
+          "alex-ui",
+          "mike-frontend"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "128",
+        "title": "Implement search functionality",
+        "url": "https://github.com/example-org/frontend-app/pull/128",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-09T09:00:00+00:00",
+        "closed_at": "2025-10-09T14:00:00+00:00",
+        "merged_at": "2025-10-09T14:00:00+00:00",
+        "additions": "234",
+        "deletions": "123",
+        "changed_files": "14",
+        "commits": "9",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-09T10:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "11",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:5",
+        "approval_authors": "sarah-dev:5",
+        "null": [
+          "2",
+          "alex-ui",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "127",
+        "title": "Fix navigation menu",
+        "url": "https://github.com/example-org/frontend-app/pull/127",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-08T14:00:00+00:00",
+        "closed_at": "2025-10-08T16:00:00+00:00",
+        "merged_at": "2025-10-08T16:00:00+00:00",
+        "additions": "45",
+        "deletions": "34",
+        "changed_files": "5",
+        "commits": "3",
+        "reviews_count": "1",
+        "first_review_at": "2025-10-08T14:45:00+00:00",
+        "time_to_first_review_hours": "0.75",
+        "time_to_merge_hours": "2.0",
+        "open_time_hours": "",
+        "comments_count": "3",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "sarah-dev:2",
+        "approval_authors": "1",
+        "null": [
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "126",
+        "title": "Add tooltip component",
+        "url": "https://github.com/example-org/frontend-app/pull/126",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-07T10:00:00+00:00",
+        "closed_at": "2025-10-07T14:00:00+00:00",
+        "merged_at": "2025-10-07T14:00:00+00:00",
+        "additions": "134",
+        "deletions": "78",
+        "changed_files": "9",
+        "commits": "6",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-07T11:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "7",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:3",
+        "approval_authors": "mike-frontend:3",
+        "null": [
+          "2",
+          "alex-ui",
+          "mike-frontend"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "125",
+        "title": "Implement modal dialogs",
+        "url": "https://github.com/example-org/frontend-app/pull/125",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-06T11:00:00+00:00",
+        "closed_at": "2025-10-07T13:00:00+00:00",
+        "merged_at": "2025-10-07T13:00:00+00:00",
+        "additions": "312",
+        "deletions": "167",
+        "changed_files": "17",
+        "commits": "11",
+        "reviews_count": "4",
+        "first_review_at": "2025-10-06T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "26.0",
+        "open_time_hours": "",
+        "comments_count": "15",
+        "comment_authors": "ai-reviewer:2",
+        "approvals_count": "alex-ui:6",
+        "approval_authors": "sarah-dev:7",
+        "null": [
+          "3",
+          "alex-ui",
+          "sarah-dev",
+          "tech-lead"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "124",
+        "title": "Fix performance bottleneck",
+        "url": "https://github.com/example-org/frontend-app/pull/124",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-05T15:00:00+00:00",
+        "closed_at": "2025-10-05T17:00:00+00:00",
+        "merged_at": "2025-10-05T17:00:00+00:00",
+        "additions": "78",
+        "deletions": "56",
+        "changed_files": "7",
+        "commits": "4",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-05T15:45:00+00:00",
+        "time_to_first_review_hours": "0.75",
+        "time_to_merge_hours": "2.0",
+        "open_time_hours": "",
+        "comments_count": "5",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "mike-frontend:2",
+        "approval_authors": "sarah-dev:2",
+        "null": [
+          "2",
+          "mike-frontend",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "123",
+        "title": "Add error boundary component",
+        "url": "https://github.com/example-org/frontend-app/pull/123",
+        "author": "sarah-dev",
+        "draft": "False",
+        "created_at": "2025-10-04T09:00:00+00:00",
+        "closed_at": "2025-10-04T13:00:00+00:00",
+        "merged_at": "2025-10-04T13:00:00+00:00",
+        "additions": "156",
+        "deletions": "89",
+        "changed_files": "11",
+        "commits": "7",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-04T10:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "4.0",
+        "open_time_hours": "",
+        "comments_count": "8",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:4",
+        "approval_authors": "mike-frontend:3",
+        "null": [
+          "2",
+          "alex-ui",
+          "mike-frontend"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "122",
+        "title": "Implement breadcrumb navigation",
+        "url": "https://github.com/example-org/frontend-app/pull/122",
+        "author": "mike-frontend",
+        "draft": "False",
+        "created_at": "2025-10-03T11:00:00+00:00",
+        "closed_at": "2025-10-03T16:00:00+00:00",
+        "merged_at": "2025-10-03T16:00:00+00:00",
+        "additions": "189",
+        "deletions": "112",
+        "changed_files": "13",
+        "commits": "8",
+        "reviews_count": "3",
+        "first_review_at": "2025-10-03T12:30:00+00:00",
+        "time_to_first_review_hours": "1.5",
+        "time_to_merge_hours": "5.0",
+        "open_time_hours": "",
+        "comments_count": "10",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "alex-ui:5",
+        "approval_authors": "sarah-dev:4",
+        "null": [
+          "2",
+          "alex-ui",
+          "sarah-dev"
+        ]
+      },
+      {
+        "repo": "example-org/frontend-app",
+        "number": "121",
+        "title": "Fix TypeScript errors",
+        "url": "https://github.com/example-org/frontend-app/pull/121",
+        "author": "alex-ui",
+        "draft": "False",
+        "created_at": "2025-10-02T13:00:00+00:00",
+        "closed_at": "2025-10-02T15:00:00+00:00",
+        "merged_at": "2025-10-02T15:00:00+00:00",
+        "additions": "89",
+        "deletions": "67",
+        "changed_files": "9",
+        "commits": "5",
+        "reviews_count": "2",
+        "first_review_at": "2025-10-02T14:00:00+00:00",
+        "time_to_first_review_hours": "1.0",
+        "time_to_merge_hours": "2.0",
+        "open_time_hours": "",
+        "comments_count": "6",
+        "comment_authors": "ai-reviewer:1",
+        "approvals_count": "mike-frontend:3",
+        "approval_authors": "sarah-dev:2",
+        "null": [
+          "2",
+          "mike-frontend",
+          "sarah-dev"
+        ]
+      }
+    ]
+  },
+  "global_dev_stats": {
+    "john-backend": {
+      "pr_count": 9,
+      "avg_review_time": 1.3333333333333333,
+      "avg_merge_time": 8.666666666666666
+    },
+    "lisa-db": {
+      "pr_count": 8,
+      "avg_review_time": 1.25,
+      "avg_merge_time": 6.375
+    },
+    "maria-api": {
+      "pr_count": 7,
+      "avg_review_time": 1.5714285714285714,
+      "avg_merge_time": 8.571428571428571
+    },
+    "sarah-dev": {
+      "pr_count": 8,
+      "avg_review_time": 1.125,
+      "avg_merge_time": 4.0
+    },
+    "mike-frontend": {
+      "pr_count": 8,
+      "avg_review_time": 1.5,
+      "avg_merge_time": 10.375
+    },
+    "alex-ui": {
+      "pr_count": 8,
+      "avg_review_time": 1.1875,
+      "avg_merge_time": 3.625
+    }
+  }
+}

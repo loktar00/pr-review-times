@@ -25,6 +25,7 @@ Usage:
 import argparse
 import csv
 import glob
+import json
 import os
 import sys
 from collections import defaultdict
@@ -46,6 +47,10 @@ CHART_STYLE = 'seaborn-v0_8-darkgrid'
 OUTLIER_CAP_REVIEW_HOURS = 200
 OUTLIER_CAP_MERGE_HOURS = 500
 
+# PR Size thresholds (configurable)
+PR_SIZE_SMALL = 200  # lines changed
+PR_SIZE_MEDIUM = 500  # lines changed
+
 # Time periods for analysis (ordered by time descending)
 TIME_PERIODS = {
     "last_7_days": {"name": "Last 7 Days", "days": 7},
@@ -59,7 +64,7 @@ def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Analyze PR review time metrics from CSV")
     p.add_argument("--input", type=str, default=None, help="Input CSV file (if not provided, analyzes all CSVs in --data-dir)")
     p.add_argument("--data-dir", type=str, default="./data", help="Directory to scan for CSV files when --input not provided")
-    p.add_argument("--output-dir", type=str, default="./analytics", help="Output directory for charts")
+    p.add_argument("--output-dir", type=str, default="./report", help="Output directory for charts and JSON data")
     p.add_argument("--min-prs", type=int, default=MIN_PRS_DEFAULT, help="Minimum PRs for per-developer stats")
     return p.parse_args()
 
@@ -141,6 +146,44 @@ def parse_datetime(value: str) -> Optional[datetime]:
 def hours_to_days(hours: float) -> float:
     """Convert hours to days."""
     return hours / HOURS_PER_DAY
+
+
+def get_pr_size(pr: Dict) -> str:
+    """Categorize PR size based on lines changed."""
+    additions = parse_float(pr.get("additions", "0")) or 0
+    deletions = parse_float(pr.get("deletions", "0")) or 0
+    total_changes = additions + deletions
+
+    if total_changes < PR_SIZE_SMALL:
+        return "small"
+    elif total_changes < PR_SIZE_MEDIUM:
+        return "medium"
+    else:
+        return "large"
+
+
+def parse_author_list(author_str: str) -> List[str]:
+    """Parse comma-separated author list from CSV."""
+    if not author_str or author_str == "":
+        return []
+    return [a.strip() for a in author_str.split(",") if a.strip()]
+
+
+def parse_comment_counts(comment_str: str) -> Dict[str, int]:
+    """Parse comment counts string like 'loktar00:3,peter:4' into dict."""
+    if not comment_str or comment_str == "":
+        return {}
+
+    result = {}
+    for item in comment_str.split(","):
+        item = item.strip()
+        if ":" in item:
+            author, count = item.split(":", 1)
+            try:
+                result[author.strip()] = int(count.strip())
+            except ValueError:
+                pass  # Skip malformed entries
+    return result
 
 
 def filter_prs_by_period(prs: List[Dict], days: Optional[int] = None) -> List[Dict]:
@@ -556,22 +599,31 @@ def create_visualizations(prs: List[Dict], overall: Dict, per_dev: Dict, trends:
     plt.close()
 
 
-def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_combined: bool = False, repo_index: int = 0) -> str:
-    """Generate HTML section for a single repository or combined view."""
+def generate_repo_data(repo_name: str, prs: List[Dict], output_dir: str, is_combined: bool = False, repo_id: str = None) -> Dict:
+    """Generate data structure for a single repository or combined view."""
     # Calculate stats for all time periods
     period_stats = {}
     period_charts = {}
 
     # Create safe repo key for filenames
     repo_key = repo_name.replace("/", "_").replace(" ", "_") if not is_combined else "all"
+    if repo_id is None:
+        repo_id = repo_key
 
     for period_key, period_info in TIME_PERIODS.items():
         filtered_prs = filter_prs_by_period(prs, period_info["days"])
         if filtered_prs:
+            overall_stats = calculate_overall_stats(filtered_prs)
+            per_dev_stats = calculate_per_developer_stats(filtered_prs)
+            trends = analyze_trends(filtered_prs)
+
             period_stats[period_key] = {
-                "overall": calculate_overall_stats(filtered_prs),
-                "per_dev": calculate_per_developer_stats(filtered_prs),
-                "trends": analyze_trends(filtered_prs),
+                "overall": overall_stats,
+                "per_dev": per_dev_stats,
+                "trends": {
+                    "review_slope": trends.get("review_slope"),
+                    "merge_slope": trends.get("merge_slope")
+                },
                 "name": period_info["name"],
                 "pr_count": len(filtered_prs)
             }
@@ -580,402 +632,38 @@ def generate_repo_section(repo_name: str, prs: List[Dict], output_dir: str, is_c
                 filtered_prs, period_key, period_info["name"], output_dir, repo_key
             )
 
-    # Build HTML section with accordion
-    section_html = f"""
-        <div class="repo-section" id="repo-{repo_index}">
-            <div class="repo-header {'combined' if is_combined else ''}">
-                <div>
-                    <div class="repo-title">{"📊 All Repositories Combined" if is_combined else f"📁 {repo_name}"}</div>
-                    <div class="repo-meta">Total PRs: {len(prs)}</div>
-                </div>
-                <div class="accordion-icon">▼</div>
-            </div>
-            <div class="repo-content">
-"""
-
-    # Add time period sections (ordered by time descending: weekly → 30 day → quarter → overall)
-    for period_key in ["last_7_days", "last_30_days", "last_quarter", "overall"]:
-        if period_key not in period_stats:
-            continue
-
-        stats = period_stats[period_key]
-        overall = stats["overall"]
-        trends = stats["trends"]
-        per_dev_period = stats["per_dev"]
-        name = stats["name"]
-
-        section_html += f"""
-        <div class="period-section">
-            <h2>{name}</h2>
-
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Total PRs</div>
-                    <div class="stat-value">{overall['total_prs']}</div>
-                </div>
-                <div class="stat-card success">
-                    <div class="stat-label">Merged</div>
-                    <div class="stat-value">{overall['merged_prs']}</div>
-                    <div class="stat-sub">{(overall['merged_prs']/overall['total_prs']*100):.1f}% merge rate</div>
-                </div>
-                <div class="stat-card warning">
-                    <div class="stat-label">Closed (not merged)</div>
-                    <div class="stat-value">{overall['closed_not_merged_prs']}</div>
-                </div>
-                <div class="stat-card info">
-                    <div class="stat-label">Still Open</div>
-                    <div class="stat-value">{overall['open_prs']}</div>
-                </div>
-            </div>
-"""
-
-        if overall.get("avg_review_time"):
-            section_html += f"""
-            <h3>⏱️ Time Metrics</h3>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-label">Time to First Review</div>
-                    <div class="stat-value">{overall['avg_review_time']:.1f}h</div>
-                    <div class="stat-sub">Avg: {hours_to_days(overall['avg_review_time']):.1f} days | Median: {overall['median_review_time']:.1f}h</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Time to Merge</div>
-                    <div class="stat-value">{overall['avg_merge_time']:.1f}h</div>
-                    <div class="stat-sub">Avg: {hours_to_days(overall['avg_merge_time']):.1f} days | Median: {overall['median_merge_time']:.1f}h</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Review → Merge Time</div>
-                    <div class="stat-value">{(overall['avg_merge_time'] - overall['avg_review_time']):.1f}h</div>
-                    <div class="stat-sub">{hours_to_days(overall['avg_merge_time'] - overall['avg_review_time']):.1f} days avg</div>
-                </div>
-            </div>
-"""
-
-        # Trends
-        if trends.get("review_slope") is not None or trends.get("merge_slope") is not None:
-            section_html += f"""
-            <h3>📈 Trends</h3>
-            <div style="margin: 20px 0;">
-"""
-            if trends.get("review_slope") is not None:
-                direction = "decreasing" if trends["review_slope"] < 0 else "increasing"
-                emoji = "🟢" if trends["review_slope"] < 0 else "🔴"
-                change = abs(trends["review_slope"]) * DAYS_PER_MONTH
-                section_html += f"""
-                <div style="margin: 10px 0;">
-                    <strong>Review Time Trend:</strong>
-                    <span class="trend-indicator {direction}">{emoji} {direction.upper()}</span>
-                    <span style="margin-left: 10px;">Change: {change:.2f} hrs/month</span>
-                </div>
-"""
-            if trends.get("merge_slope") is not None:
-                direction = "decreasing" if trends["merge_slope"] < 0 else "increasing"
-                emoji = "🟢" if trends["merge_slope"] < 0 else "🔴"
-                change = abs(trends["merge_slope"]) * DAYS_PER_MONTH
-                section_html += f"""
-                <div style="margin: 10px 0;">
-                    <strong>Merge Time Trend:</strong>
-                    <span class="trend-indicator {direction}">{emoji} {direction.upper()}</span>
-                    <span style="margin-left: 10px;">Change: {change:.2f} hrs/month</span>
-                </div>
-"""
-            section_html += """
-            </div>
-"""
-
-        # Charts
-        if period_key in period_charts:
-            charts = period_charts[period_key]
-            if "trends" in charts:
-                section_html += f"""
-            <h3>📉 Trends Over Time</h3>
-            <div class="chart-container">
-                <img src="{charts['trends']}" alt="Trends Chart - {name}">
-            </div>
-"""
-            if "distributions" in charts:
-                section_html += f"""
-            <h3>📊 Distribution Analysis</h3>
-            <div class="chart-container">
-                <img src="{charts['distributions']}" alt="Distribution Chart - {name}">
-            </div>
-"""
-
-        # Per-developer stats for this time period
-        if per_dev_period:
-            sorted_devs_period = sorted(per_dev_period.items(), key=lambda x: x[1]["pr_count"], reverse=True)
-
-            section_html += """
-            <h3>👥 Developer Performance</h3>
-            <table class="dev-table">
-                <thead>
-                    <tr>
-                        <th>Developer</th>
-                        <th>PRs</th>
-                        <th>Avg Review Time</th>
-                        <th>Avg Merge Time</th>
-                        <th>Avg Review → Merge</th>
-                    </tr>
-                </thead>
-                <tbody>
-"""
-            for author, dev_stats in sorted_devs_period:
-                review_time = f"{dev_stats['avg_review_time']:.1f}h ({hours_to_days(dev_stats['avg_review_time']):.1f}d)" if dev_stats['avg_review_time'] else "N/A"
-                merge_time = f"{dev_stats['avg_merge_time']:.1f}h ({hours_to_days(dev_stats['avg_merge_time']):.1f}d)" if dev_stats['avg_merge_time'] else "N/A"
-                review_to_merge = ""
-                if dev_stats['avg_review_time'] and dev_stats['avg_merge_time']:
-                    diff = dev_stats['avg_merge_time'] - dev_stats['avg_review_time']
-                    review_to_merge = f"{diff:.1f}h ({hours_to_days(diff):.1f}d)"
-                else:
-                    review_to_merge = "N/A"
-
-                section_html += f"""
-                    <tr>
-                        <td><strong>{author}</strong></td>
-                        <td>{dev_stats['pr_count']}</td>
-                        <td>{review_time}</td>
-                        <td>{merge_time}</td>
-                        <td>{review_to_merge}</td>
-                    </tr>
-"""
-            section_html += """
-                </tbody>
-            </table>
-"""
-
-        section_html += """
-        </div>
-"""
-
-    section_html += """
-            </div>
-        </div>
-"""
-
-    return section_html
+    return {
+        "repo_id": repo_id,
+        "repo_name": repo_name,
+        "is_combined": is_combined,
+        "total_prs": len(prs),
+        "period_stats": period_stats,
+        "period_charts": period_charts
+    }
 
 
-def generate_html_report(prs_by_repo: Dict[str, List[Dict]], output_dir: str) -> str:
-    """Generate an HTML report with statistics and charts for all repositories."""
+def generate_json_data(prs_by_repo: Dict[str, List[Dict]], output_dir: str) -> str:
+    """Generate JSON data file with all repository statistics and chart filenames."""
     from datetime import datetime, timezone
 
     report_time = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     total_prs = sum(len(prs) for prs in prs_by_repo.values())
 
-    # Start building HTML
-    html = f"""<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PR Review Time Analysis Report</title>
-    <style>
-        * {{ margin: 0; padding: 0; box-sizing: border-box; }}
-        body {{
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: #f5f5f5;
-            padding: 20px;
-        }}
-        .container {{
-            max-width: 1400px;
-            margin: 0 auto;
-            background: white;
-            padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }}
-        h1 {{
-            color: #2c3e50;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-            border-bottom: 3px solid #3498db;
-            padding-bottom: 10px;
-        }}
-        .report-meta {{
-            color: #7f8c8d;
-            margin-bottom: 30px;
-            font-size: 0.9em;
-        }}
-        h2 {{
-            color: #2c3e50;
-            margin-top: 40px;
-            margin-bottom: 20px;
-            font-size: 1.8em;
-            border-left: 4px solid #3498db;
-            padding-left: 15px;
-        }}
-        h3 {{
-            color: #34495e;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            font-size: 1.4em;
-        }}
-        .stats-grid {{
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 20px 0;
-        }}
-        .stat-card {{
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }}
-        .stat-card.success {{
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-        }}
-        .stat-card.warning {{
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }}
-        .stat-card.info {{
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        }}
-        .stat-label {{
-            font-size: 0.9em;
-            opacity: 0.9;
-            margin-bottom: 5px;
-        }}
-        .stat-value {{
-            font-size: 2em;
-            font-weight: bold;
-        }}
-        .stat-sub {{
-            font-size: 0.85em;
-            opacity: 0.8;
-            margin-top: 5px;
-        }}
-        .chart-container {{
-            margin: 30px 0;
-            text-align: center;
-        }}
-        .chart-container img {{
-            max-width: 100%;
-            height: auto;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }}
-        .dev-table {{
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-            background: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }}
-        .dev-table th {{
-            background: #3498db;
-            color: white;
-            padding: 12px;
-            text-align: left;
-            font-weight: 600;
-        }}
-        .dev-table td {{
-            padding: 12px;
-            border-bottom: 1px solid #ecf0f1;
-        }}
-        .dev-table tr:hover {{
-            background: #f8f9fa;
-        }}
-        .period-section {{
-            background: #f8f9fa;
-            padding: 30px;
-            border-radius: 8px;
-            margin: 30px 0;
-            border-left: 5px solid #3498db;
-        }}
-        .trend-indicator {{
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9em;
-        }}
-        .trend-indicator.decreasing {{
-            background: #d4edda;
-            color: #155724;
-        }}
-        .trend-indicator.increasing {{
-            background: #f8d7da;
-            color: #721c24;
-        }}
-        .repo-section {{
-            margin: 40px 0;
-            background: white;
-            border: 2px solid #e0e0e0;
-            border-radius: 12px;
-            overflow: hidden;
-        }}
-        .repo-header {{
-            padding: 20px 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: all 0.3s ease;
-        }}
-        .repo-header:hover {{
-            background: linear-gradient(135deg, #5568d3 0%, #65398b 100%);
-        }}
-        .repo-header.combined {{
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-        }}
-        .repo-header.combined:hover {{
-            background: linear-gradient(135deg, #df82ea 0%, #e4465b 100%);
-        }}
-        .repo-title {{
-            font-size: 1.8em;
-            font-weight: bold;
-            margin: 0;
-        }}
-        .repo-meta {{
-            font-size: 0.9em;
-            opacity: 0.9;
-            margin-top: 5px;
-        }}
-        .accordion-icon {{
-            font-size: 1.5em;
-            transition: transform 0.3s ease;
-        }}
-        .accordion-icon.open {{
-            transform: rotate(180deg);
-        }}
-        .repo-content {{
-            padding: 30px;
-            display: none;
-        }}
-        .repo-content.open {{
-            display: block;
-        }}
-        .global-dev-stats {{
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            padding: 30px;
-            border-radius: 12px;
-            margin: 30px 0;
-            color: white;
-        }}
-        .global-dev-stats h2 {{
-            color: white;
-            border-left-color: white;
-            margin-top: 0;
-        }}
-        .global-dev-stats .dev-table {{
-            background: white;
-            color: #333;
-        }}
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1 style="border-bottom: 3px solid #e74c3c;">📊 PR Review Time Analysis Report</h1>
-        <div class="report-meta">
-            Generated: {report_time} | Total Repositories: {len(prs_by_repo)} | Total PRs: {total_prs}
-        </div>
-"""
+    # Build data structure
+    data = {
+        "meta": {
+            "generated_at": report_time,
+            "total_repositories": len(prs_by_repo),
+            "total_prs": total_prs
+        },
+        "config": {
+            "pr_size_small": PR_SIZE_SMALL,
+            "pr_size_medium": PR_SIZE_MEDIUM
+        },
+        "time_periods": TIME_PERIODS,
+        "repositories": [],
+        "raw_prs": {}  # Store all PRs for client-side filtering
+    }
 
     # Calculate global per-developer stats across all repositories
     if len(prs_by_repo) > 1:
@@ -984,92 +672,26 @@ def generate_html_report(prs_by_repo: Dict[str, List[Dict]], output_dir: str) ->
             all_prs.extend(prs)
 
         global_dev_stats = calculate_per_developer_stats(all_prs)
-        if global_dev_stats:
-            sorted_devs = sorted(global_dev_stats.items(), key=lambda x: x[1]["pr_count"], reverse=True)
+        data["global_dev_stats"] = global_dev_stats
 
-            html += """
-        <div class="global-dev-stats">
-            <h2>👥 Global Developer Statistics (All Repositories)</h2>
-            <p style="margin-bottom: 20px; opacity: 0.9;">Combined performance metrics across all repositories</p>
+        # Generate "All Repositories Combined" data
+        combined_data = generate_repo_data("All Repositories", all_prs, output_dir, is_combined=True, repo_id="overall")
+        data["repositories"].append(combined_data)
 
-            <table class="dev-table">
-                <thead>
-                    <tr>
-                        <th>Developer</th>
-                        <th>Total PRs</th>
-                        <th>Avg Review Time</th>
-                        <th>Avg Merge Time</th>
-                        <th>Avg Review → Merge</th>
-                    </tr>
-                </thead>
-                <tbody>
-"""
-            for author, stats in sorted_devs:
-                review_time = f"{stats['avg_review_time']:.1f}h ({hours_to_days(stats['avg_review_time']):.1f}d)" if stats['avg_review_time'] else "N/A"
-                merge_time = f"{stats['avg_merge_time']:.1f}h ({hours_to_days(stats['avg_merge_time']):.1f}d)" if stats['avg_merge_time'] else "N/A"
-                review_to_merge = ""
-                if stats['avg_review_time'] and stats['avg_merge_time']:
-                    diff = stats['avg_merge_time'] - stats['avg_review_time']
-                    review_to_merge = f"{diff:.1f}h ({hours_to_days(diff):.1f}d)"
-                else:
-                    review_to_merge = "N/A"
+    # Generate individual repository data and store raw PRs
+    for repo_name in sorted(prs_by_repo.keys()):
+        repo_data = generate_repo_data(repo_name, prs_by_repo[repo_name], output_dir, is_combined=False)
+        data["repositories"].append(repo_data)
 
-                html += f"""
-                    <tr>
-                        <td><strong>{author}</strong></td>
-                        <td>{stats['pr_count']}</td>
-                        <td>{review_time}</td>
-                        <td>{merge_time}</td>
-                        <td>{review_to_merge}</td>
-                    </tr>
-"""
-            html += """
-                </tbody>
-            </table>
-        </div>
-"""
+        # Store raw PR data for this repository (for client-side filtering)
+        data["raw_prs"][repo_name] = prs_by_repo[repo_name]
 
-        # Generate "All Repositories Combined" section
-        html += generate_repo_section("All Repositories", all_prs, output_dir, is_combined=True, repo_index=0)
+    # Write JSON file
+    json_path = os.path.join(output_dir, "report-data.json")
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, default=str)
 
-    # Generate individual repository sections
-    for idx, repo_name in enumerate(sorted(prs_by_repo.keys()), start=1):
-        html += generate_repo_section(repo_name, prs_by_repo[repo_name], output_dir, is_combined=False, repo_index=idx)
-
-    html += """
-    </div>
-
-    <script>
-        // Accordion functionality
-        document.querySelectorAll('.repo-header').forEach(header => {{
-            header.addEventListener('click', () => {{
-                const content = header.nextElementSibling;
-                const icon = header.querySelector('.accordion-icon');
-
-                // Toggle current section
-                content.classList.toggle('open');
-                icon.classList.toggle('open');
-            }});
-        }});
-
-        // Open first section by default
-        const firstContent = document.querySelector('.repo-content');
-        const firstIcon = document.querySelector('.accordion-icon');
-        if (firstContent) {{
-            firstContent.classList.add('open');
-            firstIcon.classList.add('open');
-        }}
-    </script>
-</body>
-</html>
-"""
-
-    # Write HTML file
-    report_path = os.path.join(output_dir, "report.html")
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(html)
-
-    return report_path
+    return json_path
 
 
 def main() -> None:
@@ -1105,7 +727,7 @@ def main() -> None:
     total_prs = sum(len(prs) for prs in prs_by_repo.values())
     print(f"✓ Loaded {total_prs} PRs total from {len(prs_by_repo)} repository/repositories")
 
-    print("\n📊 Generating HTML report with charts...")
+    print("\n📊 Generating charts and data...")
     if len(prs_by_repo) > 1:
         print(f"  └─ Creating combined view for all {len(prs_by_repo)} repositories")
     for repo_name in sorted(prs_by_repo.keys()):
@@ -1114,13 +736,13 @@ def main() -> None:
     # Set matplotlib style
     plt.style.use(CHART_STYLE)
 
-    # Generate HTML report (includes all stats and charts)
-    report_path = generate_html_report(prs_by_repo, args.output_dir)
+    # Generate JSON data file (includes all stats and references to charts)
+    json_path = generate_json_data(prs_by_repo, args.output_dir)
 
     print(f"\n✅ Analysis complete!")
-    print(f"   📄 HTML Report: {report_path}")
-    print(f"   📊 Charts: {args.output_dir}/")
-    print(f"\n💡 Open {report_path} in your browser to view the full report!")
+    print(f"   📊 Data: {json_path}")
+    print(f"   📈 Charts: {args.output_dir}/")
+    print(f"\n💡 Open index.html in your browser to view the report!")
 
 
 if __name__ == "__main__":

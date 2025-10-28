@@ -2,7 +2,7 @@
 
 Analyze pull request review performance across your GitHub repositories. Track review times, identify bottlenecks, and visualize trends with beautiful charts.
 
-## 🎯 [View Live Demo](https://loktar00.github.io/pr-review-times/report.html)
+## 🎯 [View Live Demo](https://loktar00.github.io/pr-review-times/)
 
 See a fully-featured example report with sample data from two repositories. [Demo Documentation](https://loktar00.github.io/pr-review-times)
 
@@ -85,14 +85,18 @@ python analyze_pr_times.py
 $env:PYTHONIOENCODING='utf-8'; python analyze_pr_times.py
 ```
 
-Results:
-- **HTML Report**: `./analytics/report.html` - Open in your browser for a beautiful, comprehensive report
-- **Multi-Repository Support**: Automatically detects multiple CSV files and generates:
-  - Combined "All Repositories" view with aggregated statistics
-  - Individual sections for each repository with dedicated charts
-- **Time Period Analysis**: Overall, Last Quarter (90 days), and Last 30 Days for each repository
-- **Per-Repository Charts**: Each repository gets its own trend and distribution charts
-- **Per-Developer Stats**: Shows developers across all repositories with combined metrics
+**View the Report:**
+- Open `index.html` in your browser
+- All charts and data are automatically loaded from `./report/`
+- No server required - works as a local file!
+- For demo: Open `index.html?data=demo` to view sample data
+
+**What You Get:**
+- **Multi-Repository Support**: Combined "All Repositories" view + individual repo sections
+- **Time Period Analysis**: Weekly, 30 Day, Quarter, and Overall views
+- **Global Developer Stats**: Performance metrics across all repositories
+- **Interactive Navigation**: Sidebar for repos, tabs for time periods
+- **Beautiful Charts**: Trend analysis and distribution visualizations
 
 ## What Data You Get
 
@@ -123,21 +127,25 @@ Each repository gets a CSV file with these columns:
 
 ### Analytics Output
 
-**HTML Report** (`./analytics/report.html`):
+**HTML Report** (`./report/index.html`):
 - 🎨 Beautiful, professional web report you can share with your team
-- 📊 **Three Time Periods**: Overall, Last Quarter (90 days), and Last 30 Days
-- 📈 Each period includes:
+- 🗂️ **Sidebar Navigation**: Switch between "Overall" (combined) view and individual repositories
+- 📊 **Four Time Periods**: Weekly (7 days), 30 Day, Quarter (90 days), and Overall
+- 📈 **Tabbed Interface**: Each repository has tabs for different time periods
+- 🌍 **Global Developer Stats**: Combined performance metrics across all repositories
+- Each period includes:
   - Summary statistics (PR counts, merge rates)
   - Time metrics (review time, merge time, review→merge time)
   - Trend indicators (improving/declining with visual badges)
   - Interactive charts (trends over time, distribution histograms)
-- 👥 **Per-Developer Stats**: Detailed table and charts showing individual performance
+  - Per-developer performance tables
 - 📱 **Responsive Design**: Works perfectly on desktop, tablet, and mobile
 
-**Generated Charts** (embedded in HTML, also saved separately):
-- `trends_overall.png`, `trends_last_quarter.png`, `trends_last_30_days.png` - Time series with trend lines
-- `distributions_overall.png`, `distributions_last_quarter.png`, `distributions_last_30_days.png` - Histograms
-- `per_developer_stats.png` - Per-developer comparison bars
+**Generated Data** (`./report/`):
+- `report-data.json` - All statistics, trends, and metadata in JSON format
+- `*_trends_*.png` - Time series charts with trend lines for each repo and period
+- `*_distributions_*.png` - Distribution histograms for each repo and period
+- **Note**: The `report/` directory is git-ignored (generated files)
 
 ## Common Usage Patterns
 
@@ -215,7 +223,7 @@ Data is saved as it's fetched, so you never lose progress.
 |--------|---------|-------------|
 | `--input` | auto-detect | Specific CSV file to analyze |
 | `--data-dir` | `./data` | Directory to scan for CSV files |
-| `--output-dir` | `./analytics` | Output directory for charts |
+| `--output-dir` | `./report` | Output directory for charts and JSON data |
 | `--min-prs` | `3` | Minimum PRs for per-developer stats |
 
 ## Understanding the Insights
@@ -249,19 +257,24 @@ Use this to:
 
 The analysis tracks three key time periods:
 
-1. **Time to First Review** (creation → first review)
-   - How long until someone first reviews the PR
-   - Example: 14 hours = ~14 hours until first review appears
+1. **Time to First Review** (shown as "Avg Review Time" in per-developer stats)
+   - **Measures**: Hours from PR creation until someone submits their first formal review
+   - **Important**: Tracks GitHub's "Submit Review" button, not just comments
+   - **What it means**: Team responsiveness to new PRs
+   - **Example**: 0.1h = 6 minutes (very fast!), 6.7h = ~7 hours (good), 24h+ = may need attention
+   - **Why it varies**: Recent improvements in process, smaller PRs, active monitoring, or team changes
 
-2. **Time to Merge** (creation → merge)
-   - Total time from PR creation until it's merged
-   - Example: 44 hours = ~1.8 days total PR lifetime
+2. **Time to Merge** (shown as "Avg Merge Time")
+   - **Measures**: Total time from PR creation until it's merged
+   - **Includes**: Review + discussion + revisions + approvals + all cycles
+   - **Example**: 44 hours = ~1.8 days total PR lifetime
+   - **Note**: Always ≥ Time to First Review
 
 3. **Review → Merge Time** (first review → merge)
-   - Time from first review to actual merge
-   - Calculated as: Time to Merge - Time to First Review
-   - Example: 30 hours = after first review, takes another ~30 hours to merge
-   - This includes: additional review rounds, code changes, CI/CD, approvals, etc.
+   - **Measures**: Time from first review to actual merge
+   - **Calculated as**: Time to Merge - Time to First Review
+   - **Example**: 30 hours = after first review, takes another ~30 hours to merge
+   - **Includes**: Additional review rounds, code changes, CI/CD, approvals, etc.
 
 ### Why PRs Take Longer to Merge Than First Review
 
@@ -273,6 +286,40 @@ Even if first review happens quickly (e.g., 14 hours), total merge time is longe
 - Coordination and scheduling
 
 This is **normal and healthy** for quality code review! Quick first review shows responsiveness, while additional time ensures thorough review.
+
+### Impact of Automated Reviewers (Bots/AI) 🤖
+
+If you use automated PR reviewers (like AI code review bots, linters, or security scanners that submit GitHub reviews):
+
+**What You'll See:**
+- **Very low "Time to First Review"** (< 1 hour, often minutes)
+- **"Avg Merge Time" ≈ "Review → Merge Time"** (nearly identical numbers)
+
+**Why This Happens:**
+- The bot reviews instantly (minutes after PR creation)
+- This becomes the "first review" in the metrics
+- Almost all PR time is *after* the bot review (waiting for humans)
+- So "Time to Merge" and "Review → Merge" are almost the same
+
+**What The Metrics Actually Show:**
+- ✅ **Time to First Review**: How fast your bot responds (not very useful for human metrics)
+- ✅ **Review → Merge Time**: How long the PR takes after bot review (this is your real lifecycle time!)
+- ℹ️ **Human review time**: Not currently tracked separately
+
+**Example With AI Bot:**
+```
+PR Created (0h)
+    ↓ [AI bot reviews in 6 minutes]
+First Review (0.1h) ← AI Bot 🤖
+    ↓ [Waiting for human review, changes, approval]
+Merged (6h)
+
+Time to First Review:  0.1h  (AI instant response)
+Time to Merge:         6.0h  (full lifecycle)
+Review → Merge:        5.9h  (almost identical to merge time!)
+```
+
+**Tip**: If you want to track human review times separately, consider filtering out bot accounts when fetching data, or create a separate analysis excluding bot reviews.
 
 ### PR Status Categories
 
@@ -317,18 +364,20 @@ $env:PYTHONIOENCODING='utf-8'; python analyze_pr_times.py
 
 ```
 pr-review-times/
-├── data/                          # CSV files (one per repo)
+├── index.html                     # 📄 Main HTML report (open this!)
+├── data/                          # CSV files (one per repo, git-ignored)
 │   ├── owner_repo.csv
 │   └── org_project.csv
-├── analytics/                     # Generated reports and charts
-│   ├── report.html                # 📄 Main HTML report (open this!)
-│   ├── trends_overall.png         # Charts for all time periods
-│   ├── trends_last_quarter.png
-│   ├── trends_last_30_days.png
-│   ├── distributions_overall.png
-│   ├── distributions_last_quarter.png
-│   ├── distributions_last_30_days.png
-│   └── per_developer_stats.png
+├── report/                        # Generated analytics (git-ignored)
+│   ├── report-data.json           # All statistics in JSON format
+│   ├── *_trends_*.png             # Trend charts for each period
+│   └── *_distributions_*.png      # Distribution charts
+├── demo/                          # Demo data (tracked in git)
+│   ├── report-data.json           # Sample data
+│   └── *.png                      # Sample charts
+├── demo_data/                     # Demo CSV files (tracked in git)
+│   ├── example-org_backend-api.csv
+│   └── example-org_frontend-app.csv
 ├── gh_pr_times.py                 # Data fetching script
 ├── analyze_pr_times.py            # Analytics & visualization
 ├── requirements.txt               # Python dependencies
@@ -361,8 +410,9 @@ git rm -rf .
 
 3. **Copy report files:**
 ```bash
-cp -r analytics/* .
-git add .
+cp index.html index.html
+cp -r report report
+git add index.html report/
 git commit -m "Add PR analytics report"
 git push origin gh-pages
 ```
@@ -370,7 +420,9 @@ git push origin gh-pages
 4. **Enable GitHub Pages:**
    - Go to your repository Settings → Pages
    - Select `gh-pages` branch as source
-   - Your report will be available at: `https://your-username.github.io/your-repo/report.html`
+   - Your report will be available at: `https://your-username.github.io/your-repo/`
+
+**Note**: The single `index.html` file works for both regular data and demo data. Use `index.html?data=demo` to view the demo.
 
 ### Automated Updates
 
@@ -398,11 +450,16 @@ jobs:
           python analyze_pr_times.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Prepare deployment
+        run: |
+          mkdir -p gh-pages
+          cp index.html gh-pages/index.html
+          cp -r report gh-pages/report
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./analytics
+          publish_dir: ./gh-pages
 ```
 
 ## Notes
