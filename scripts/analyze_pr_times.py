@@ -742,7 +742,7 @@ def main() -> None:
     print(f"\n✅ Analysis complete!")
     print(f"   📊 Data: {json_path}")
     print(f"   📈 Charts: {args.output_dir}/")
-    print(f"\n💡 Open index.html in your browser to view the report!")
+    print(f"\n💡 Open web/index.html in your browser to view the report!")
 
 
 if __name__ == "__main__":

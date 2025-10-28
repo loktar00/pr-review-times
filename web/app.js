@@ -199,8 +199,9 @@ function getPRsForPeriod(repoName, periodKey) {
 }
 
 function getDataDirectory() {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('data') || 'report';
+    // Detect if we're in web/ subdirectory (development) or at root (production/gh-pages)
+    const isInWebDir = window.location.pathname.includes('/web/');
+    return isInWebDir ? '../report' : 'report';
 }
 
 // Icon helper function
