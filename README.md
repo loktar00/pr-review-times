@@ -65,10 +65,10 @@ Get a token at: https://github.com/settings/tokens (needs `repo` scope)
 
 ```bash
 # Single repository
-python gh_pr_times.py --repos owner/repo
+python scripts/gh_pr_times.py --repos owner/repo
 
 # Multiple repositories
-python gh_pr_times.py --repos org/repo1 org/repo2 org/repo3
+python scripts/gh_pr_times.py --repos org/repo1 org/repo2 org/repo3
 ```
 
 This creates CSV files in `./data/` directory (one per repo).
@@ -79,17 +79,16 @@ This creates CSV files in `./data/` directory (one per repo).
 
 ```bash
 # Analyzes all CSV files in ./data automatically
-python analyze_pr_times.py
+python scripts/analyze_pr_times.py
 
 # On Windows, if you see encoding errors:
-$env:PYTHONIOENCODING='utf-8'; python analyze_pr_times.py
+$env:PYTHONIOENCODING='utf-8'; python scripts/analyze_pr_times.py
 ```
 
 **View the Report:**
-- Open `index.html` in your browser
+- Open `web/index.html` in your browser
 - All charts and data are automatically loaded from `./report/`
 - No server required - works as a local file!
-- For demo: Open `index.html?data=demo` to view sample data
 
 **What You Get:**
 - **Multi-Repository Support**: Combined "All Repositories" view + individual repo sections
@@ -127,7 +126,7 @@ Each repository gets a CSV file with these columns:
 
 ### Analytics Output
 
-**HTML Report** (`./report/index.html`):
+**HTML Report** (`web/index.html`):
 - 🎨 Beautiful, professional web report you can share with your team
 - 🗂️ **Sidebar Navigation**: Switch between "Overall" (combined) view and individual repositories
 - 📊 **Four Time Periods**: Weekly (7 days), 30 Day, Quarter (90 days), and Overall
@@ -155,10 +154,10 @@ Run the same commands to update with only new PRs:
 
 ```bash
 # Fetch new PRs (automatic incremental update)
-python gh_pr_times.py --repos owner/repo
+python scripts/gh_pr_times.py --repos owner/repo
 
 # Regenerate analytics
-python analyze_pr_times.py
+python scripts/analyze_pr_times.py
 ```
 
 ### Multiple Repositories
@@ -167,14 +166,14 @@ Analyze across your entire team:
 
 ```bash
 # Fetch from all repos
-python gh_pr_times.py --repos \
+python scripts/gh_pr_times.py --repos \
   org/frontend \
   org/backend \
   org/api \
   org/mobile
 
 # Analyze all repos combined
-python analyze_pr_times.py
+python scripts/analyze_pr_times.py
 ```
 
 ### Date Range Filtering
@@ -182,7 +181,7 @@ python analyze_pr_times.py
 Get PRs from specific time period:
 
 ```bash
-python gh_pr_times.py --repos owner/repo \
+python scripts/gh_pr_times.py --repos owner/repo \
   --since 2025-01-01 \
   --until 2025-03-31
 ```
@@ -193,10 +192,10 @@ If the script times out, just run it again:
 
 ```bash
 # First run - times out after 237 PRs
-python gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
+python scripts/gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
 
 # Run again - automatically continues from PR #238!
-python gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
+python scripts/gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
 ```
 
 Data is saved as it's fetched, so you never lose progress.
@@ -338,13 +337,13 @@ Review → Merge:        5.9h  (almost identical to merge time!)
 **No CSV files found:**
 ```bash
 # Run the fetch command first
-python gh_pr_times.py --repos owner/repo
+python scripts/gh_pr_times.py --repos owner/repo
 ```
 
 **Timeout errors:**
 ```bash
 # Increase timeout and retries
-python gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
+python scripts/gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
 
 # If it times out, just run the same command again
 ```
@@ -357,14 +356,20 @@ python gh_pr_times.py --repos owner/repo --timeout 60 --retries 5
 **Emoji encoding errors (Windows):**
 ```powershell
 # Set UTF-8 encoding before running
-$env:PYTHONIOENCODING='utf-8'; python analyze_pr_times.py
+$env:PYTHONIOENCODING='utf-8'; python scripts/analyze_pr_times.py
 ```
 
 ## Files & Directories
 
 ```
 pr-review-times/
-├── index.html                     # 📄 Main HTML report (open this!)
+├── web/                           # 🌐 Client application
+│   ├── index.html                 # 📄 Main HTML report (open this!)
+│   ├── app.js                     # Application logic
+│   └── styles.css                 # Styling
+├── scripts/                       # 🐍 Python analysis tools
+│   ├── gh_pr_times.py             # Data fetching script
+│   └── analyze_pr_times.py        # Analytics & visualization
 ├── data/                          # CSV files (one per repo, git-ignored)
 │   ├── owner_repo.csv
 │   └── org_project.csv
@@ -372,15 +377,14 @@ pr-review-times/
 │   ├── report-data.json           # All statistics in JSON format
 │   ├── *_trends_*.png             # Trend charts for each period
 │   └── *_distributions_*.png      # Distribution charts
-├── demo/                          # Demo data (tracked in git)
+├── demo/                          # 📊 Example output (tracked in git)
 │   ├── report-data.json           # Sample data
 │   └── *.png                      # Sample charts
-├── demo_data/                     # Demo CSV files (tracked in git)
+├── demo_data/                     # 📁 Example CSV files (tracked in git)
 │   ├── example-org_backend-api.csv
 │   └── example-org_frontend-app.csv
-├── gh_pr_times.py                 # Data fetching script
-├── analyze_pr_times.py            # Analytics & visualization
 ├── requirements.txt               # Python dependencies
+├── env.example                    # Environment template
 └── .env                           # GitHub token (create this)
 ```
 
@@ -398,8 +402,8 @@ You can host your PR analytics report on GitHub Pages to share with your team:
 
 1. **Generate your report:**
 ```bash
-python gh_pr_times.py --repos your-org/your-repo
-python analyze_pr_times.py
+python scripts/gh_pr_times.py --repos your-org/your-repo
+python scripts/analyze_pr_times.py
 ```
 
 2. **Create gh-pages branch:**
@@ -410,9 +414,9 @@ git rm -rf .
 
 3. **Copy report files:**
 ```bash
-cp index.html index.html
+cp -r web/* .
 cp -r report report
-git add index.html report/
+git add index.html app.js styles.css report/
 git commit -m "Add PR analytics report"
 git push origin gh-pages
 ```
@@ -421,8 +425,6 @@ git push origin gh-pages
    - Go to your repository Settings → Pages
    - Select `gh-pages` branch as source
    - Your report will be available at: `https://your-username.github.io/your-repo/`
-
-**Note**: The single `index.html` file works for both regular data and demo data. Use `index.html?data=demo` to view the demo.
 
 ### Automated Updates
 
@@ -446,14 +448,14 @@ jobs:
           python-version: '3.11'
       - run: pip install -r requirements.txt
       - run: |
-          python gh_pr_times.py --repos your-org/your-repo
-          python analyze_pr_times.py
+          python scripts/gh_pr_times.py --repos your-org/your-repo
+          python scripts/analyze_pr_times.py
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Prepare deployment
         run: |
           mkdir -p gh-pages
-          cp index.html gh-pages/index.html
+          cp -r web/* gh-pages/
           cp -r report gh-pages/report
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

@@ -200,7 +200,24 @@ function getPRsForPeriod(repoName, periodKey) {
 
 function getDataDirectory() {
     const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get('data') || 'report';
+    const dataParam = urlParams.get('data');
+
+    // If a specific data directory is requested, use it
+    if (dataParam) {
+        // For development (in web/ dir): prepend ../ if needed
+        // For production (at root): use as is
+        // Check if we're in a web subdirectory by looking at the current path
+        const isInWebDir = window.location.pathname.includes('/web/');
+
+        if (isInWebDir && !dataParam.startsWith('../') && !dataParam.startsWith('/')) {
+            return `../${dataParam}`;
+        }
+        return dataParam;
+    }
+
+    // Default: detect if we're in web/ subdirectory or at root
+    const isInWebDir = window.location.pathname.includes('/web/');
+    return isInWebDir ? '../report' : 'report';
 }
 
 // Icon helper function
