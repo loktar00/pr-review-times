@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PR Review Time Analysis Report</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
     <div id="loading" class="loading">
@@ -13,7 +14,7 @@
 
     <div id="app" style="display: none;">
         <div class="sidebar" id="sidebar">
-            <!-- Dynamically populated by JavaScript -->
+            <!-- Theme toggle will be inserted here by JavaScript -->
         </div>
 
         <div class="main-content">
@@ -23,243 +24,75 @@
         </div>
     </div>
 
-    <script>
-        // Global state
-        let reportData = null;
-        let currentRepoId = 'overall';
-        let excludedUsers = new Set();  // Users to filter out
-        let filteredData = null;  // Recalculated data after filtering
-
-        // Utility functions
-        function hoursToDays(hours) {
-            return (hours / 24).toFixed(1);
-        }
-
-        function getPRSize(pr, config) {
-            const additions = parseFloat(pr.additions) || 0;
-            const deletions = parseFloat(pr.deletions) || 0;
-            const totalChanges = additions + deletions;
-
-            if (totalChanges < config.pr_size_small) return 'small';
-            if (totalChanges < config.pr_size_medium) return 'medium';
-            return 'large';
-        }
-
-        function parseCommentCounts(commentStr) {
-            // Parse "loktar00:3,peter:4" into {loktar00: 3, peter: 4}
-            if (!commentStr) return {};
-            const result = {};
-            commentStr.split(',').forEach(item => {
-                const [author, count] = item.split(':');
-                if (author && count) {
-                    result[author.trim()] = parseInt(count.trim()) || 0;
-                }
-            });
-            return result;
-        }
-
-        function parseAuthorList(authorStr) {
-            // Parse "author1,author2,author3" into array
-            if (!authorStr) return [];
-            return authorStr.split(',').map(a => a.trim()).filter(a => a);
-        }
-
-        function filterPR(pr) {
-            // Return true if PR should be included (not filtered out)
-            if (excludedUsers.size === 0) return true;
-
-            // Check if PR author is excluded
-            if (excludedUsers.has(pr.author)) return false;
-
-            // For now, include the PR if author isn't excluded
-            // Comments/approvals from excluded users will be filtered in metrics
-            return true;
-        }
-
-        function filterCommentCounts(commentStr) {
-            // Remove excluded users from comment counts
-            if (excludedUsers.size === 0) return commentStr;
-
-            const counts = parseCommentCounts(commentStr);
-            const filtered = {};
-
-            for (const [author, count] of Object.entries(counts)) {
-                if (!excludedUsers.has(author)) {
-                    filtered[author] = count;
-                }
-            }
-
-            // Convert back to string format
-            return Object.entries(filtered)
-                .map(([author, count]) => `${author}:${count}`)
-                .join(',');
-        }
-
-        function filterApprovalAuthors(authorStr) {
-            // Remove excluded users from approval list
-            if (excludedUsers.size === 0) return authorStr;
-
-            const authors = parseAuthorList(authorStr);
-            const filtered = authors.filter(a => !excludedUsers.has(a));
-
-            return filtered.join(',');
-        }
-
-        function formatTime(hours) {
-            if (hours === null || hours === undefined) return 'N/A';
-            return `${hours.toFixed(1)}h (${hoursToDays(hours)}d)`;
-        }
-
-        function formatPercentage(value, total) {
-            if (!total) return '0.0';
-            return ((value / total) * 100).toFixed(1);
-        }
-
-        // Calculate PR size breakdown from raw PR list
-        function calculatePRSizes(prs) {
-            const sizes = { small: 0, medium: 0, large: 0 };
-            prs.forEach(pr => {
-                const size = getPRSize(pr, reportData.config);
-                sizes[size]++;
-            });
-            return sizes;
-        }
-
-        // Calculate comment metrics from raw PR list
-        function calculateCommentMetrics(prs) {
-            let totalComments = 0;
-            const commentsByAuthor = {};
-
-            prs.forEach(pr => {
-                const commentCounts = parseCommentCounts(filterCommentCounts(pr.comment_authors || ''));
-
-                for (const [author, count] of Object.entries(commentCounts)) {
-                    totalComments += count;
-                    commentsByAuthor[author] = (commentsByAuthor[author] || 0) + count;
-                }
-            });
-
-            return { totalComments, commentsByAuthor };
-        }
-
-        // Calculate approval metrics from raw PR list
-        function calculateApprovalMetrics(prs) {
-            const approvalsByAuthor = {};
-            let totalApprovals = 0;
-
-            prs.forEach(pr => {
-                const approvalAuthors = parseAuthorList(filterApprovalAuthors(pr.approval_authors || ''));
-
-                approvalAuthors.forEach(author => {
-                    approvalsByAuthor[author] = (approvalsByAuthor[author] || 0) + 1;
-                    totalApprovals++;
-                });
-            });
-
-            return { totalApprovals, approvalsByAuthor };
-        }
-
-        // Get PRs for a specific period and repository
-        function getPRsForPeriod(repoName, periodKey) {
-            if (!reportData.raw_prs || !reportData.raw_prs[repoName]) return [];
-
-            const prs = reportData.raw_prs[repoName];
-            const periodInfo = reportData.time_periods[periodKey];
-
-            // Filter by excluded users
-            let filtered = prs.filter(pr => filterPR(pr));
-
-            // Filter by time period
-            if (periodInfo.days) {
-                const cutoffDate = new Date();
-                cutoffDate.setDate(cutoffDate.getDate() - periodInfo.days);
-
-                filtered = filtered.filter(pr => {
-                    const createdAt = new Date(pr.created_at);
-                    return createdAt >= cutoffDate;
-                });
-            }
-
-            return filtered;
-        }
-
-        // Get data directory from query parameter (default: 'report')
-        function getDataDirectory() {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('data') || 'report';
-        }
-
-        // Load JSON data
-        async function loadData() {
-            try {
-                const dataDir = getDataDirectory();
-                const response = await fetch(`${dataDir}/report-data.json`);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                reportData = await response.json();
-                initializeApp();
-            } catch (error) {
-                document.getElementById('loading').innerHTML = `
-                    <div style="text-align: center;">
-                        <p style="color: #e74c3c; font-size: 1.5em; margin-bottom: 10px;">❌ Error Loading Report</p>
-                        <p style="color: #7f8c8d;">${error.message}</p>
-                        <p style="color: #7f8c8d; margin-top: 20px;">Make sure you've run analyze_pr_times.py to generate data/report-data.json</p>
+    <!-- HTML Templates -->
+    <template id="nav-item-template">
+        <div class="nav-item">
+            <div class="nav-item-title"></div>
+            <div class="nav-item-meta"></div>
                     </div>
-                `;
-                console.error('Error loading data:', error);
-            }
-        }
+    </template>
 
-        // Initialize the app
-        function initializeApp() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-
-            renderSidebar();
-            renderRepository(currentRepoId);
-        }
-
-        // Render sidebar navigation
-        function renderSidebar() {
-            const sidebar = document.getElementById('sidebar');
-
-            let html = `
-                <div class="sidebar-header">
-                    <div class="sidebar-title">📊 PR Analytics</div>
+    <template id="stat-card-template">
+        <div class="stat-card">
+            <div class="stat-label"></div>
+            <div class="stat-value"></div>
+            <div class="stat-sub"></div>
                 </div>
-            `;
+    </template>
 
-            reportData.repositories.forEach(repo => {
-                const isActive = repo.repo_id === currentRepoId;
-                const icon = repo.is_combined ? '📊' : '📁';
-                html += `
-                    <div class="nav-item ${isActive ? 'active' : ''}" onclick="switchRepository('${repo.repo_id}')">
-                        <div class="nav-item-title">${icon} ${repo.repo_name}</div>
-                        <div class="nav-item-meta">${repo.total_prs} PRs</div>
+    <template id="filter-tag-template">
+                            <div class="filter-tag">
+            <span class="filter-tag-name"></span>
+            <span class="filter-tag-remove">×</span>
                     </div>
-                `;
-            });
+    </template>
 
-            sidebar.innerHTML = html;
-        }
+    <template id="tab-button-template">
+        <button class="tab-button"></button>
+    </template>
 
-        // Switch repository view
-        function switchRepository(repoId) {
-            currentRepoId = repoId;
-            renderSidebar();
-            renderRepository(repoId);
-        }
+    <template id="dev-table-row-template">
+        <tr>
+            <td class="dev-name"></td>
+            <td class="dev-pr-count"></td>
+            <td class="dev-review-time"></td>
+            <td class="dev-merge-time"></td>
+            <td class="dev-review-to-merge"></td>
+                                </tr>
+    </template>
 
-        // Render global developer stats
-        function renderGlobalDevStats() {
-            const sortedDevs = Object.entries(reportData.global_dev_stats).sort((a, b) => b[1].pr_count - a[1].pr_count);
+    <template id="commenter-row-template">
+        <tr>
+            <td class="commenter-name"></td>
+            <td class="commenter-count"></td>
+            <td class="commenter-percentage"></td>
+            <td class="commenter-avg"></td>
+                            </tr>
+    </template>
 
-            let html = `
-                <div style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                    <h2 style="color: white; border-left-color: white; margin-top: 0;">👥 Global Developer Statistics (All Repositories)</h2>
-                    <p style="margin-bottom: 20px; opacity: 0.9;">Combined performance metrics across all repositories</p>
+    <template id="approver-row-template">
+        <tr>
+            <td class="approver-name"></td>
+            <td class="approver-count"></td>
+            <td class="approver-percentage"></td>
+                                </tr>
+    </template>
 
+    <template id="pr-row-template">
+        <tr>
+            <td class="pr-number"></td>
+            <td class="pr-title"></td>
+            <td class="pr-author"></td>
+            <td class="pr-size"></td>
+            <td class="pr-status"></td>
+            <td class="pr-created"></td>
+        </tr>
+    </template>
+
+    <template id="global-dev-stats-template">
+        <div class="global-dev-stats">
+            <h2><i data-lucide="users" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle; margin-right: 8px;"></i>Global Developer Statistics (All Repositories)</h2>
+            <p class="global-dev-stats-subtitle">Combined performance metrics across all repositories</p>
                     <table class="dev-table">
                         <thead>
                             <tr>
@@ -270,328 +103,48 @@
                                 <th>Avg Review → Merge</th>
                             </tr>
                         </thead>
-                        <tbody>
-            `;
-
-            sortedDevs.forEach(([author, stats]) => {
-                const reviewTime = formatTime(stats.avg_review_time);
-                const mergeTime = formatTime(stats.avg_merge_time);
-                const reviewToMerge = (stats.avg_review_time && stats.avg_merge_time)
-                    ? formatTime(stats.avg_merge_time - stats.avg_review_time)
-                    : 'N/A';
-
-                html += `
-                    <tr>
-                        <td><strong>${author}</strong></td>
-                        <td>${stats.pr_count}</td>
-                        <td>${reviewTime}</td>
-                        <td>${mergeTime}</td>
-                        <td>${reviewToMerge}</td>
-                    </tr>
-                `;
-            });
-
-            html += `
-                        </tbody>
+                <tbody class="dev-stats-tbody"></tbody>
                     </table>
                 </div>
-            `;
+    </template>
 
-            return html;
-        }
-
-        // Render filter UI
-        function renderFilterUI() {
-            let html = `
-                <div class="filter-section">
-                    <h3>🔍 Filter Users</h3>
-                    <p style="margin-bottom: 15px; color: #666; font-size: 0.9em;">
-                        Exclude users (e.g., bots, automated reviewers) from all metrics and calculations.
-                    </p>
-            `;
-
-            if (excludedUsers.size > 0) {
-                html += `
-                    <div class="filter-tags">
-                        ${Array.from(excludedUsers).map(user => `
-                            <div class="filter-tag">
-                                <span>${user}</span>
-                                <span class="filter-tag-remove" onclick="removeExcludedUser('${user}')">×</span>
+    <template id="empty-state-template">
+        <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <h3 class="empty-state-title">No PRs in This Period</h3>
+            <p class="empty-state-message">No pull requests were created during this time window.</p>
                             </div>
-                        `).join('')}
-                    </div>
-                `;
-            }
+    </template>
 
-            html += `
-                    <div class="filter-input-group">
-                        <input
-                            type="text"
-                            id="exclude-user-input"
-                            class="filter-input"
-                            placeholder="Enter username to exclude (e.g., bot-name, ai-reviewer)"
-                            onkeypress="if(event.key==='Enter') addExcludedUser()"
-                        />
-                        <button class="filter-button" onclick="addExcludedUser()">Exclude User</button>
+    <template id="error-state-template">
+        <div class="error-state">
+            <p class="error-title">❌ Error Loading Report</p>
+            <p class="error-message"></p>
+            <p class="error-help">Make sure you've run analyze_pr_times.py to generate data/report-data.json</p>
                     </div>
-                    <div class="filter-info">
-                        💡 <strong>Tip:</strong> Common bot accounts to exclude: dependabot, renovate, github-actions, codecov, etc.
-                        <br><br>
-                        ⚠️ <strong>Note:</strong> Currently, filtering excludes PRs by author and filters comments/approvals.
-                        For full recalculation including updated charts and trends, re-run the analysis script excluding these users at data collection time.
-                    </div>
+    </template>
+
+    <template id="trend-item-template">
+        <div class="trend-item">
+            <strong class="trend-label"></strong>
+            <span class="trend-indicator"></span>
+            <span class="trend-change"></span>
                 </div>
-            `;
+    </template>
 
-            return html;
-        }
+    <template id="dev-table-header-template">
+        <thead>
+            <tr>
+                <th>Developer</th>
+                <th>PRs</th>
+                <th>Avg Review Time</th>
+                <th>Avg Merge Time</th>
+                <th>Avg Review → Merge</th>
+            </tr>
+        </thead>
+    </template>
 
-        // Add excluded user
-        function addExcludedUser() {
-            const input = document.getElementById('exclude-user-input');
-            const username = input.value.trim();
-
-            if (username && !excludedUsers.has(username)) {
-                excludedUsers.add(username);
-                input.value = '';
-
-                // Refresh current view
-                renderRepository(currentRepoId);
-            }
-        }
-
-        // Remove excluded user
-        function removeExcludedUser(username) {
-            excludedUsers.delete(username);
-            // Refresh current view
-            renderRepository(currentRepoId);
-        }
-
-        // Render repository content
-        function renderRepository(repoId) {
-            const repo = reportData.repositories.find(r => r.repo_id === repoId);
-            if (!repo) return;
-
-            const content = document.getElementById('content');
-
-            let html = '';
-
-            // Add filter UI at the top
-            html += renderFilterUI();
-
-            // Add global developer stats section if we're viewing the "Overall" combined view
-            if (repo.is_combined && reportData.global_dev_stats && Object.keys(reportData.global_dev_stats).length > 0) {
-                html += renderGlobalDevStats();
-            }
-
-            // Get periods in order - show all periods, even if no data
-            const periodOrder = ['last_7_days', 'last_30_days', 'last_quarter', 'overall'];
-
-            // Create tab navigation
-            html += `
-                <div class="tab-navigation">
-                    ${periodOrder.map(periodKey => {
-                        const periodInfo = reportData.time_periods[periodKey];
-                        const hasData = repo.period_stats[periodKey];
-                        return `<button class="tab-button ${!hasData ? 'no-data' : ''}" onclick="switchTab('${periodKey}')" id="tab-btn-${periodKey}">
-                            ${periodInfo.name}
-                        </button>`;
-                    }).join('')}
-                </div>
-            `;
-
-            // Create tab content for each period
-            periodOrder.forEach(periodKey => {
-                const periodStats = repo.period_stats[periodKey];
-                const periodCharts = repo.period_charts[periodKey] || {};
-                html += renderPeriodContent(periodKey, periodStats, periodCharts, repo.repo_id);
-            });
-
-            content.innerHTML = html;
-
-            // Activate first tab (prefer first period with data, fallback to first period)
-            const firstPeriodWithData = periodOrder.find(p => repo.period_stats[p]);
-            switchTab(firstPeriodWithData || periodOrder[0]);
-        }
-
-        // Switch tab
-        function switchTab(periodKey) {
-            // Update buttons
-            document.querySelectorAll('.tab-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            document.getElementById(`tab-btn-${periodKey}`).classList.add('active');
-
-            // Update content
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`tab-content-${periodKey}`).classList.add('active');
-        }
-
-        // Render period content
-        function renderPeriodContent(periodKey, stats, charts, repoId) {
-            let html = `<div class="tab-content" id="tab-content-${periodKey}">`;
-
-            // Handle empty period (no data)
-            if (!stats) {
-                html += `
-                    <div style="padding: 60px 20px; text-align: center; color: #7f8c8d;">
-                        <div style="font-size: 3em; margin-bottom: 20px;">📊</div>
-                        <h3 style="color: #95a5a6; margin-bottom: 10px;">No PRs in This Period</h3>
-                        <p>No pull requests were created during this time window.</p>
-                    </div>
-                </div>`;
-                return html;
-            }
-
-            const overall = stats.overall;
-            const perDev = stats.per_dev;
-            const trends = stats.trends;
-
-            // Overall stats
-            html += `
-                <h2>📊 ${stats.name} Overview</h2>
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-label">Total PRs</div>
-                        <div class="stat-value">${overall.total_prs}</div>
-                    </div>
-                    <div class="stat-card success">
-                        <div class="stat-label">Merged</div>
-                        <div class="stat-value">${overall.merged_prs}</div>
-                        <div class="stat-sub">${formatPercentage(overall.merged_prs, overall.total_prs)}% merge rate</div>
-                    </div>
-                    <div class="stat-card warning">
-                        <div class="stat-label">Closed (not merged)</div>
-                        <div class="stat-value">${overall.closed_not_merged_prs}</div>
-                    </div>
-                    <div class="stat-card info">
-                        <div class="stat-label">Still Open</div>
-                        <div class="stat-value">${overall.open_prs}</div>
-                    </div>
-                </div>
-            `;
-
-            // Time metrics
-            if (overall.avg_review_time) {
-                const reviewToMerge = overall.avg_merge_time - overall.avg_review_time;
-                html += `
-                    <h3>⏱️ Time Metrics</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-label">Time to First Review</div>
-                            <div class="stat-value">${overall.avg_review_time.toFixed(1)}h</div>
-                            <div class="stat-sub">Avg: ${hoursToDays(overall.avg_review_time)} days | Median: ${overall.median_review_time.toFixed(1)}h</div>
-                            <div class="stat-sub" style="font-size: 0.75em; margin-top: 8px; opacity: 0.7;">Creation → First Review Submission</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Time to Merge</div>
-                            <div class="stat-value">${overall.avg_merge_time.toFixed(1)}h</div>
-                            <div class="stat-sub">Avg: ${hoursToDays(overall.avg_merge_time)} days | Median: ${overall.median_merge_time.toFixed(1)}h</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Review → Merge Time</div>
-                            <div class="stat-value">${reviewToMerge.toFixed(1)}h</div>
-                            <div class="stat-sub">${hoursToDays(reviewToMerge)} days avg</div>
-                            <div class="stat-sub" style="font-size: 0.75em; margin-top: 8px; opacity: 0.7;">First Review → Final Merge</div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            // Trends
-            if (trends.review_slope !== null || trends.merge_slope !== null) {
-                html += `<h3>📈 Trends</h3><div style="margin: 20px 0;">`;
-
-                if (trends.review_slope !== null) {
-                    const direction = trends.review_slope < 0 ? 'decreasing' : 'increasing';
-                    const emoji = trends.review_slope < 0 ? '🟢' : '🔴';
-                    const change = Math.abs(trends.review_slope) * 30;
-                    html += `
-                        <div style="margin: 10px 0;">
-                            <strong>Review Time Trend:</strong>
-                            <span class="trend-indicator ${direction}">${emoji} ${direction.toUpperCase()}</span>
-                            <span style="margin-left: 10px;">Change: ${change.toFixed(2)} hrs/month</span>
-                        </div>
-                    `;
-                }
-
-                if (trends.merge_slope !== null) {
-                    const direction = trends.merge_slope < 0 ? 'decreasing' : 'increasing';
-                    const emoji = trends.merge_slope < 0 ? '🟢' : '🔴';
-                    const change = Math.abs(trends.merge_slope) * 30;
-                    html += `
-                        <div style="margin: 10px 0;">
-                            <strong>Merge Time Trend:</strong>
-                            <span class="trend-indicator ${direction}">${emoji} ${direction.toUpperCase()}</span>
-                            <span style="margin-left: 10px;">Change: ${change.toFixed(2)} hrs/month</span>
-                        </div>
-                    `;
-                }
-
-                html += `</div>`;
-            }
-
-            // Get raw PRs for this period to calculate new metrics
-            const repoName = reportData.repositories.find(r => r.repo_id === repoId)?.repo_name;
-            const periodPRs = repoName ? getPRsForPeriod(repoName, periodKey) : [];
-
-            // PR Size Breakdown
-            if (periodPRs.length > 0) {
-                const sizes = calculatePRSizes(periodPRs);
-                const totalPRs = periodPRs.length;
-
-                html += `
-                    <h3>📏 PR Size Breakdown</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card" style="background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);">
-                            <div class="stat-label">Small PRs</div>
-                            <div class="stat-value">${sizes.small}</div>
-                            <div class="stat-sub">${formatPercentage(sizes.small, totalPRs)}% | < ${reportData.config.pr_size_small} lines</div>
-                        </div>
-                        <div class="stat-card" style="background: linear-gradient(135deg, #f09819 0%, #edde5d 100%);">
-                            <div class="stat-label">Medium PRs</div>
-                            <div class="stat-value">${sizes.medium}</div>
-                            <div class="stat-sub">${formatPercentage(sizes.medium, totalPRs)}% | ${reportData.config.pr_size_small}-${reportData.config.pr_size_medium} lines</div>
-                        </div>
-                        <div class="stat-card" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);">
-                            <div class="stat-label">Large PRs</div>
-                            <div class="stat-value">${sizes.large}</div>
-                            <div class="stat-sub">${formatPercentage(sizes.large, totalPRs)}% | > ${reportData.config.pr_size_medium} lines</div>
-                        </div>
-                    </div>
-                `;
-
-                // Comment Metrics
-                const commentMetrics = calculateCommentMetrics(periodPRs);
-                const avgCommentsPerPR = (commentMetrics.totalComments / totalPRs).toFixed(1);
-
-                html += `
-                    <h3>💬 Comment Activity</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                            <div class="stat-label">Total Comments</div>
-                            <div class="stat-value">${commentMetrics.totalComments}</div>
-                            <div class="stat-sub">${avgCommentsPerPR} avg per PR</div>
-                        </div>
-                        <div class="stat-card" style="background: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);">
-                            <div class="stat-label">Active Commenters</div>
-                            <div class="stat-value">${Object.keys(commentMetrics.commentsByAuthor).length}</div>
-                            <div class="stat-sub">Unique participants</div>
-                        </div>
-                    </div>
-                `;
-
-                // Top Commenters
-                if (Object.keys(commentMetrics.commentsByAuthor).length > 0) {
-                    const sortedCommenters = Object.entries(commentMetrics.commentsByAuthor)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 10);
-
-                    html += `
-                        <h4 style="margin-top: 20px; color: #34495e;">Top Commenters</h4>
-                        <table class="dev-table">
+    <template id="commenter-table-header-template">
                             <thead>
                                 <tr>
                                     <th>Developer</th>
@@ -600,57 +153,9 @@
                                     <th>Avg per PR</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                    `;
+    </template>
 
-                    sortedCommenters.forEach(([author, count]) => {
-                        const percentage = formatPercentage(count, commentMetrics.totalComments);
-                        const avgPerPR = (count / totalPRs).toFixed(1);
-                        html += `
-                            <tr>
-                                <td><strong>${author}</strong></td>
-                                <td>${count}</td>
-                                <td>${percentage}%</td>
-                                <td>${avgPerPR}</td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `
-                            </tbody>
-                        </table>
-                    `;
-                }
-
-                // Approval Metrics
-                const approvalMetrics = calculateApprovalMetrics(periodPRs);
-                const avgApprovalsPerPR = (approvalMetrics.totalApprovals / totalPRs).toFixed(1);
-
-                html += `
-                    <h3>✅ Approval Activity</h3>
-                    <div class="stats-grid">
-                        <div class="stat-card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
-                            <div class="stat-label">Total Approvals</div>
-                            <div class="stat-value">${approvalMetrics.totalApprovals}</div>
-                            <div class="stat-sub">${avgApprovalsPerPR} avg per PR</div>
-                        </div>
-                        <div class="stat-card" style="background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);">
-                            <div class="stat-label">Active Approvers</div>
-                            <div class="stat-value">${Object.keys(approvalMetrics.approvalsByAuthor).length}</div>
-                            <div class="stat-sub">Unique approvers</div>
-                        </div>
-                    </div>
-                `;
-
-                // Top Approvers
-                if (Object.keys(approvalMetrics.approvalsByAuthor).length > 0) {
-                    const sortedApprovers = Object.entries(approvalMetrics.approvalsByAuthor)
-                        .sort((a, b) => b[1] - a[1])
-                        .slice(0, 10);
-
-                    html += `
-                        <h4 style="margin-top: 20px; color: #34495e;">Top Approvers</h4>
-                        <table class="dev-table">
+    <template id="approver-table-header-template">
                             <thead>
                                 <tr>
                                     <th>Developer</th>
@@ -658,33 +163,9 @@
                                     <th>% of Total</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                    `;
+    </template>
 
-                    sortedApprovers.forEach(([author, count]) => {
-                        const percentage = formatPercentage(count, approvalMetrics.totalApprovals);
-                        html += `
-                            <tr>
-                                <td><strong>${author}</strong></td>
-                                <td>${count}</td>
-                                <td>${percentage}%</td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `
-                            </tbody>
-                        </table>
-                    `;
-                }
-
-                // Recent PRs (for last_7_days period only)
-                if (periodKey === 'last_7_days' && periodPRs.length > 0) {
-                    const sortedPRs = [...periodPRs].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-                    html += `
-                        <h3>📋 Recent PRs (Last 7 Days)</h3>
-                        <table class="dev-table">
+    <template id="pr-table-header-template">
                             <thead>
                                 <tr>
                                     <th>PR</th>
@@ -695,104 +176,34 @@
                                     <th>Created</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                    `;
+    </template>
 
-                    sortedPRs.forEach(pr => {
-                        const size = getPRSize(pr, reportData.config);
-                        const sizeColor = size === 'small' ? '#28a745' : size === 'medium' ? '#ffc107' : '#dc3545';
-                        const status = pr.merged_at ? '✅ Merged' : pr.closed_at ? '❌ Closed' : '🔄 Open';
-                        const createdDate = new Date(pr.created_at).toLocaleDateString();
-
-                        html += `
-                            <tr>
-                                <td><a href="${pr.url}" target="_blank" style="color: #3498db;">#${pr.number}</a></td>
-                                <td>${pr.title}</td>
-                                <td>${pr.author}</td>
-                                <td><span style="color: ${sizeColor}; font-weight: bold;">${size}</span></td>
-                                <td>${status}</td>
-                                <td>${createdDate}</td>
-                            </tr>
-                        `;
-                    });
-
-                    html += `
-                            </tbody>
-                        </table>
-                    `;
-                }
-            }
-
-            // Charts
-            const dataDir = getDataDirectory();
-            if (charts.trends) {
-                html += `
-                    <h3>📉 Trends Over Time</h3>
-                    <div class="chart-container">
-                        <img src="${dataDir}/${charts.trends}" alt="Trends Chart - ${stats.name}">
+    <template id="filter-section-template">
+        <div class="filter-section">
+            <h3><i data-lucide="filter" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 8px;"></i>Filter Users</h3>
+            <p class="filter-description">
+                Exclude users (e.g., bots, automated reviewers) from all metrics and calculations.
+            </p>
+            <div class="filter-tags-container"></div>
+            <div class="filter-input-group">
+                <input
+                    type="text"
+                    id="exclude-user-input"
+                    class="filter-input"
+                    placeholder="Enter username to exclude (e.g., bot-name, ai-reviewer)"
+                />
+                <button class="filter-button">Exclude User</button>
+            </div>
+            <div class="filter-info">
+                💡 <strong>Tip:</strong> Common bot accounts to exclude: dependabot, renovate, github-actions, codecov, etc.
+                <br><br>
+                ⚠️ <strong>Note:</strong> Currently, filtering excludes PRs by author and filters comments/approvals.
+                For full recalculation including updated charts and trends, re-run the analysis script excluding these users at data collection time.
                     </div>
-                `;
-            }
-
-            if (charts.distributions) {
-                html += `
-                    <h3>📊 Distribution Analysis</h3>
-                    <div class="chart-container">
-                        <img src="${dataDir}/${charts.distributions}" alt="Distribution Chart - ${stats.name}">
                     </div>
-                `;
-            }
+    </template>
 
-            // Per-developer stats
-            if (perDev && Object.keys(perDev).length > 0) {
-                const sortedDevs = Object.entries(perDev).sort((a, b) => b[1].pr_count - a[1].pr_count);
-
-                html += `
-                    <h3>👥 Developer Performance</h3>
-                    <table class="dev-table">
-                        <thead>
-                            <tr>
-                                <th>Developer</th>
-                                <th>PRs</th>
-                                <th>Avg Review Time</th>
-                                <th>Avg Merge Time</th>
-                                <th>Avg Review → Merge</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                `;
-
-                sortedDevs.forEach(([author, devStats]) => {
-                    const reviewTime = formatTime(devStats.avg_review_time);
-                    const mergeTime = formatTime(devStats.avg_merge_time);
-                    const reviewToMerge = (devStats.avg_review_time && devStats.avg_merge_time)
-                        ? formatTime(devStats.avg_merge_time - devStats.avg_review_time)
-                        : 'N/A';
-
-                    html += `
-                        <tr>
-                            <td><strong>${author}</strong></td>
-                            <td>${devStats.pr_count}</td>
-                            <td>${reviewTime}</td>
-                            <td>${mergeTime}</td>
-                            <td>${reviewToMerge}</td>
-                        </tr>
-                    `;
-                });
-
-                html += `
-                        </tbody>
-                    </table>
-                `;
-            }
-
-            html += `</div>`;
-            return html;
-        }
-
-        // Load data on page load
-        loadData();
-    </script>
+    <script src="app.js"></script>
 </body>
 </html>
 
