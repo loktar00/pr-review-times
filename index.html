@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PR Review Time Analysis Report</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <div id="loading" class="loading">
+        Loading report data...
+    </div>
+
+    <div id="app" style="display: none;">
+        <div class="sidebar" id="sidebar">
+            <!-- Theme toggle will be inserted here by JavaScript -->
+        </div>
+
+        <div class="main-content">
+            <div id="content">
+                <!-- Dynamically populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- HTML Templates -->
+    <template id="nav-item-template">
+        <div class="nav-item">
+            <div class="nav-item-title"></div>
+            <div class="nav-item-meta"></div>
+                    </div>
+    </template>
+
+    <template id="stat-card-template">
+        <div class="stat-card">
+            <div class="stat-label"></div>
+            <div class="stat-value"></div>
+            <div class="stat-sub"></div>
+                </div>
+    </template>
+
+    <template id="filter-tag-template">
+                            <div class="filter-tag">
+            <span class="filter-tag-name"></span>
+            <span class="filter-tag-remove">×</span>
+                    </div>
+    </template>
+
+    <template id="tab-button-template">
+        <button class="tab-button"></button>
+    </template>
+
+    <template id="dev-table-row-template">
+        <tr>
+            <td class="dev-name"></td>
+            <td class="dev-pr-count"></td>
+            <td class="dev-review-time"></td>
+            <td class="dev-merge-time"></td>
+            <td class="dev-review-to-merge"></td>
+                                </tr>
+    </template>
+
+    <template id="commenter-row-template">
+        <tr>
+            <td class="commenter-name"></td>
+            <td class="commenter-count"></td>
+            <td class="commenter-percentage"></td>
+            <td class="commenter-avg"></td>
+                            </tr>
+    </template>
+
+    <template id="approver-row-template">
+        <tr>
+            <td class="approver-name"></td>
+            <td class="approver-count"></td>
+            <td class="approver-percentage"></td>
+                                </tr>
+    </template>
+
+    <template id="pr-row-template">
+        <tr>
+            <td class="pr-number"></td>
+            <td class="pr-title"></td>
+            <td class="pr-author"></td>
+            <td class="pr-size"></td>
+            <td class="pr-status"></td>
+            <td class="pr-created"></td>
+        </tr>
+    </template>
+
+    <template id="global-dev-stats-template">
+        <div class="global-dev-stats">
+            <h2><i data-lucide="users" style="width: 24px; height: 24px; display: inline-block; vertical-align: middle; margin-right: 8px;"></i>Global Developer Statistics (All Repositories)</h2>
+            <p class="global-dev-stats-subtitle">Combined performance metrics across all repositories</p>
+                    <table class="dev-table">
+                        <thead>
+                            <tr>
+                                <th>Developer</th>
+                                <th>Total PRs</th>
+                                <th>Avg Review Time</th>
+                                <th>Avg Merge Time</th>
+                                <th>Avg Review → Merge</th>
+                            </tr>
+                        </thead>
+                <tbody class="dev-stats-tbody"></tbody>
+                    </table>
+                </div>
+    </template>
+
+    <template id="empty-state-template">
+        <div class="empty-state">
+            <div class="empty-state-icon">📊</div>
+            <h3 class="empty-state-title">No PRs in This Period</h3>
+            <p class="empty-state-message">No pull requests were created during this time window.</p>
+                            </div>
+    </template>
+
+    <template id="error-state-template">
+        <div class="error-state">
+            <p class="error-title">❌ Error Loading Report</p>
+            <p class="error-message"></p>
+            <p class="error-help">Make sure you've run analyze_pr_times.py to generate data/report-data.json</p>
+                    </div>
+    </template>
+
+    <template id="trend-item-template">
+        <div class="trend-item">
+            <strong class="trend-label"></strong>
+            <span class="trend-indicator"></span>
+            <span class="trend-change"></span>
+                </div>
+    </template>
+
+    <template id="dev-table-header-template">
+        <thead>
+            <tr>
+                <th>Developer</th>
+                <th>PRs</th>
+                <th>Avg Review Time</th>
+                <th>Avg Merge Time</th>
+                <th>Avg Review → Merge</th>
+            </tr>
+        </thead>
+    </template>
+
+    <template id="commenter-table-header-template">
+                            <thead>
+                                <tr>
+                                    <th>Developer</th>
+                                    <th>Comments</th>
+                                    <th>% of Total</th>
+                                    <th>Avg per PR</th>
+                                </tr>
+                            </thead>
+    </template>
+
+    <template id="approver-table-header-template">
+                            <thead>
+                                <tr>
+                                    <th>Developer</th>
+                                    <th>Approvals</th>
+                                    <th>% of Total</th>
+                                </tr>
+                            </thead>
+    </template>
+
+    <template id="pr-table-header-template">
+                            <thead>
+                                <tr>
+                                    <th>PR</th>
+                                    <th>Title</th>
+                                    <th>Author</th>
+                                    <th>Size</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+    </template>
+
+    <template id="filter-section-template">
+        <div class="filter-section">
+            <h3><i data-lucide="filter" style="width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 8px;"></i>Filter Users</h3>
+            <p class="filter-description">
+                Exclude users (e.g., bots, automated reviewers) from all metrics and calculations.
+            </p>
+            <div class="filter-tags-container"></div>
+            <div class="filter-input-group">
+                <input
+                    type="text"
+                    id="exclude-user-input"
+                    class="filter-input"
+                    placeholder="Enter username to exclude (e.g., bot-name, ai-reviewer)"
+                />
+                <button class="filter-button">Exclude User</button>
+            </div>
+            <div class="filter-info">
+                💡 <strong>Tip:</strong> Common bot accounts to exclude: dependabot, renovate, github-actions, codecov, etc.
+                <br><br>
+                ⚠️ <strong>Note:</strong> Currently, filtering excludes PRs by author and filters comments/approvals.
+                For full recalculation including updated charts and trends, re-run the analysis script excluding these users at data collection time.
+                    </div>
+                    </div>
+    </template>
+
+    <script src="app.js"></script>
+</body>
+</html>
+
