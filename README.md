@@ -426,6 +426,8 @@ git push origin gh-pages
    - Select `gh-pages` branch as source
    - Your report will be available at: `https://your-username.github.io/your-repo/`
 
+**Note**: The [live demo](https://loktar00.github.io/pr-review-times/) is simply the application deployed on GitHub Pages with example data from the `demo/` folder copied to `report/`. To create your own demo, just deploy with your sample data in the `report/` directory.
+
 ### Automated Updates
 
 Add a GitHub Action to automatically update the report:
@@ -471,7 +473,7 @@ jobs:
 - **Multi-repo safe**: Each repo gets its own CSV file
 - **Reviews vs Comments**: "Time to first review" tracks submitted reviews, not PR comments
 - **Private repos**: Token needs `repo` scope (not just `public_repo`)
-- **Demo available**: Check out the [live demo](https://loktar00.github.io/pr-review-times/report.html) with sample data
+- **Demo available**: Check out the [live demo](https://loktar00.github.io/pr-review-times/) with sample data
 
 ## License
 
