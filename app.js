@@ -19,15 +19,16 @@ function toggleTheme() {
 
 function updateThemeToggle(theme) {
     const toggleButton = document.getElementById('theme-toggle');
+    if (!toggleButton) return;
+
     const icon = toggleButton.querySelector('.theme-toggle-icon');
-    const text = toggleButton.querySelector('.theme-toggle-text');
 
     if (theme === 'dark') {
         icon.setAttribute('data-lucide', 'sun');
-        text.textContent = 'Light Mode';
+        toggleButton.setAttribute('title', 'Switch to Light Mode');
     } else {
         icon.setAttribute('data-lucide', 'moon');
-        text.textContent = 'Dark Mode';
+        toggleButton.setAttribute('title', 'Switch to Dark Mode');
     }
 
     // Reinitialize icons after change
@@ -36,11 +37,26 @@ function updateThemeToggle(theme) {
     }
 }
 
+function createThemeToggle() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    const toggleButton = document.createElement('button');
+    toggleButton.className = 'theme-toggle';
+    toggleButton.id = 'theme-toggle';
+    toggleButton.setAttribute('aria-label', 'Toggle theme');
+    toggleButton.setAttribute('title', currentTheme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode');
+
+    const icon = document.createElement('i');
+    icon.className = 'theme-toggle-icon';
+    icon.setAttribute('data-lucide', currentTheme === 'dark' ? 'sun' : 'moon');
+
+    toggleButton.appendChild(icon);
+    toggleButton.addEventListener('click', toggleTheme);
+
+    return toggleButton;
+}
+
 // Initialize theme on load
 initializeTheme();
-
-// Add theme toggle event listener
-document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
 
 // ========================================
 // Global State
@@ -444,14 +460,20 @@ function renderSidebar() {
     const header = document.createElement('div');
     header.className = 'sidebar-header';
 
+
     const title = document.createElement('div');
     title.className = 'sidebar-title';
     title.appendChild(createIcon('bar-chart-3', 18));
     const titleText = document.createTextNode('PR Analytics');
     title.appendChild(titleText);
-
     header.appendChild(title);
+
     sidebar.appendChild(header);
+
+    // Add theme toggle to header (before title)
+    const themeToggle = createThemeToggle();
+    header.appendChild(themeToggle);
+
 
     reportData.repositories.forEach(repo => {
         const isActive = repo.repo_id === currentRepoId;
