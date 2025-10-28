@@ -4,8 +4,7 @@
 Analyze pull‑request review performance across GitHub repositories. Track review times, spot bottlenecks, and view trends in an HTML report.
 
 ## View Live Demo
-[https://loktar00.github.io/pr-review-times/](https://loktar00.github.io/pr-review-times/)
-Demo documentation: [https://loktar00.github.io/pr-review-times](https://loktar00.github.io/pr-review-times)
+[View Live Demo](https://loktar00.github.io/pr-review-times/)
 
 ## What It Does
 The toolkit fetches PR data from GitHub and produces an HTML report with analytics.
