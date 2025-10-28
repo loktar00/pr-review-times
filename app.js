@@ -395,7 +395,8 @@ function createTrendItem(label, slope) {
     const item = cloneTemplate('trend-item-template');
     const direction = slope < 0 ? 'decreasing' : 'increasing';
     const emoji = slope < 0 ? '🟢' : '🔴';
-    const change = Math.abs(slope) * 30;
+    const changeHoursPerMonth = Math.abs(slope) * 30;
+    const changeDaysPerMonth = changeHoursPerMonth / 24;
 
     item.querySelector('.trend-label').textContent = label;
 
@@ -403,7 +404,12 @@ function createTrendItem(label, slope) {
     indicator.className = `trend-indicator ${direction}`;
     indicator.textContent = `${emoji} ${direction.toUpperCase()}`;
 
-    item.querySelector('.trend-change').textContent = `Change: ${change.toFixed(2)} hrs/month`;
+    // Show in days if >= 1 day, otherwise show in hours
+    if (changeDaysPerMonth >= 1) {
+        item.querySelector('.trend-change').textContent = `Change: ${changeDaysPerMonth.toFixed(1)} days/month`;
+    } else {
+        item.querySelector('.trend-change').textContent = `Change: ${changeHoursPerMonth.toFixed(1)} hrs/month`;
+    }
 
     return item;
 }
