@@ -195,6 +195,107 @@ def enrich_pr(session: requests.Session, token: str, owner: str, repo: str, pr_n
     resp = gh_get(session, url, token, timeout=timeout, retries=retries)
     return resp.json()
 
+def fetch_single_pr(session: requests.Session, token: str, owner: str, repo: str, pr_number: int, timeout: float, retries: int = DEFAULT_RETRIES) -> Optional[Dict]:
+    """Fetch a single PR by number. Returns None if PR doesn't exist."""
+    try:
+        url = f"{API_ROOT}/repos/{owner}/{repo}/pulls/{pr_number}"
+        resp = gh_get(session, url, token, timeout=timeout, retries=retries)
+        return resp.json()
+    except requests.exceptions.HTTPError as e:
+        if e.response and e.response.status_code == 404:
+            return None
+        raise
+
+def process_pr_data(session: requests.Session, token: str, owner: str, repo: str, repo_key: str,
+                   pr: Dict, timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> Dict:
+    """Process a PR and return a CSV row dict with all the data."""
+    pr_number = pr.get("number")
+    created_at = dt_from_iso8601(pr.get("created_at"))
+    merged_at = dt_from_iso8601(pr.get("merged_at"))
+    closed_at = dt_from_iso8601(pr.get("closed_at"))
+    pr_url = pr.get("html_url")
+    author = (pr.get("user") or {}).get("login")
+    title = pr.get("title") or ""
+    draft = bool(pr.get("draft"))
+
+    # Enrich to get size stats
+    full = enrich_pr(session, token, owner, repo, pr_number, timeout, retries)
+    additions = full.get("additions")
+    deletions = full.get("deletions")
+    changed_files = full.get("changed_files")
+    commits = full.get("commits")
+
+    # Reviews
+    reviews = fetch_reviews(session, token, owner, repo, pr_number, timeout, sleep_s, retries)
+    reviews_count = len(reviews)
+    first_review_at = None
+    if reviews:
+        try:
+            first_review_at = min(
+                (dt_from_iso8601(r.get("submitted_at")) for r in reviews if r.get("submitted_at")),
+                default=None
+            )
+        except Exception:
+            first_review_at = None
+
+    # Approvals (from reviews with state APPROVED)
+    approvals = [r for r in reviews if r.get("state") == "APPROVED"]
+    approvals_count = len(approvals)
+    approval_authors = list(set((r.get("user") or {}).get("login") for r in approvals if (r.get("user") or {}).get("login")))
+    approval_authors_str = ",".join(sorted(approval_authors))
+
+    # Comments (both issue comments and review comments)
+    issue_comments = fetch_issue_comments(session, token, owner, repo, pr_number, timeout, sleep_s, retries)
+    review_comments = fetch_review_comments(session, token, owner, repo, pr_number, timeout, sleep_s, retries)
+    all_comments = issue_comments + review_comments
+    comments_count = len(all_comments)
+
+    # Count comments per author
+    comment_counts_by_author = {}
+    for comment in all_comments:
+        author_login = (comment.get("user") or {}).get("login")
+        if author_login:
+            comment_counts_by_author[author_login] = comment_counts_by_author.get(author_login, 0) + 1
+
+    # Format as "author:count,author:count"
+    comment_authors_str = ",".join(f"{author}:{count}" for author, count in sorted(comment_counts_by_author.items()))
+
+    time_to_first_review_hours = hours_between(created_at, first_review_at)
+    time_to_merge_hours = hours_between(created_at, merged_at)
+    open_time_hours = None
+    if merged_at is None:
+        # If still open, measure time from creation to now
+        # If closed but not merged, measure creation to closed
+        now = datetime.now(timezone.utc)
+        end = closed_at or now
+        open_time_hours = hours_between(created_at, end)
+
+    # Return row dict
+    return {
+        "repo": repo_key,
+        "number": pr_number,
+        "title": title,
+        "url": pr_url,
+        "author": author,
+        "draft": draft,
+        "created_at": created_at.isoformat() if created_at else "",
+        "closed_at": closed_at.isoformat() if closed_at else "",
+        "merged_at": merged_at.isoformat() if merged_at else "",
+        "additions": additions,
+        "deletions": deletions,
+        "changed_files": changed_files,
+        "commits": commits,
+        "reviews_count": reviews_count,
+        "first_review_at": first_review_at.isoformat() if first_review_at else "",
+        "time_to_first_review_hours": time_to_first_review_hours if time_to_first_review_hours is not None else "",
+        "time_to_merge_hours": time_to_merge_hours if time_to_merge_hours is not None else "",
+        "open_time_hours": open_time_hours if open_time_hours is not None else "",
+        "comments_count": comments_count,
+        "comment_authors": comment_authors_str,
+        "approvals_count": approvals_count,
+        "approval_authors": approval_authors_str,
+    }
+
 def count_prs(session: requests.Session, token: str, owner: str, repo: str, state: str,
               since_dt: Optional[datetime], until_dt: Optional[datetime], timeout: float, sleep_s: float, retries: int = DEFAULT_RETRIES) -> int:
     """Count total PRs that match the criteria without fetching full details."""
@@ -221,14 +322,15 @@ def get_csv_filename(owner: str, repo: str, out_dir: str) -> str:
 
     return os.path.join(out_dir, csv_filename)
 
-def load_existing_csv(csv_path: str, repo_key: str) -> Tuple[List[Dict], Optional[datetime], set]:
-    """Load existing CSV data and find latest PR date and already-processed PRs for this specific repo."""
+def load_existing_csv(csv_path: str, repo_key: str) -> Tuple[List[Dict], Optional[datetime], set, set]:
+    """Load existing CSV data and find latest PR date, already-processed PRs, and open PRs for this specific repo."""
     existing_rows = []
     latest_date = None
     processed_prs = set()  # Set of PR numbers
+    open_prs = set()  # Set of PR numbers that are currently open
 
     if not os.path.exists(csv_path):
-        return existing_rows, latest_date, processed_prs
+        return existing_rows, latest_date, processed_prs, open_prs
 
     try:
         with open(csv_path, "r", newline="", encoding="utf-8") as f:
@@ -243,6 +345,10 @@ def load_existing_csv(csv_path: str, repo_key: str) -> Tuple[List[Dict], Optiona
                     if number:
                         processed_prs.add(str(number))
 
+                        # Track PRs that are currently open (not closed, not merged)
+                        if not row.get("closed_at") and not row.get("merged_at"):
+                            open_prs.add(str(number))
+
                     # Track latest creation date
                     created_at = dt_from_iso8601(row.get("created_at"))
                     if created_at:
@@ -251,7 +357,7 @@ def load_existing_csv(csv_path: str, repo_key: str) -> Tuple[List[Dict], Optiona
     except Exception as e:
         print(f"⚠️  Warning: Could not read existing CSV: {e}", file=sys.stderr)
 
-    return existing_rows, latest_date, processed_prs
+    return existing_rows, latest_date, processed_prs, open_prs
 
 def main() -> None:
     args = parse_args()
@@ -299,15 +405,64 @@ def main() -> None:
         existing_rows = []
         latest_date = None
         processed_prs = set()
+        open_prs = set()
 
         if file_exists and not args.force_full_refresh:
             print(f"\n📂 Loading existing data from {out_path}...", file=sys.stderr)
-            existing_rows, latest_date, processed_prs = load_existing_csv(out_path, repo_key)
+            existing_rows, latest_date, processed_prs, open_prs = load_existing_csv(out_path, repo_key)
             if existing_rows:
                 print(f"✓ Found {len(existing_rows)} existing PRs", file=sys.stderr)
                 if latest_date:
                     print(f"  └─ Latest PR: {latest_date.strftime('%Y-%m-%d %H:%M')}", file=sys.stderr)
                     print(f"  └─ Will fetch only newer PRs", file=sys.stderr)
+                if open_prs:
+                    print(f"  └─ Found {len(open_prs)} previously open PRs to check for updates", file=sys.stderr)
+
+        # Check and update previously open PRs
+        updated_prs = {}  # Maps PR number to updated row dict
+        if open_prs and not args.force_full_refresh:
+            print(f"\n🔄 Checking status of {len(open_prs)} previously open PRs...", file=sys.stderr)
+            pbar_update = tqdm(total=len(open_prs), desc=f"Updating {owner}/{repo}", unit="PR", file=sys.stderr)
+
+            for pr_number_str in open_prs:
+                pr_number = int(pr_number_str)
+                try:
+                    # Fetch current state of this PR
+                    pr = fetch_single_pr(session, token, owner, repo, pr_number, args.timeout, args.retries)
+                    if pr:
+                        # Check if PR is now closed or merged
+                        if pr.get("closed_at") or pr.get("merged_at"):
+                            pbar_update.set_postfix_str(f"PR #{pr_number}: {'merged' if pr.get('merged_at') else 'closed'}")
+                            # Process the PR data
+                            row = process_pr_data(session, token, owner, repo, repo_key, pr,
+                                                args.timeout, args.sleep, args.retries)
+                            updated_prs[pr_number_str] = row
+                except Exception as e:
+                    print(f"\n⚠️  Error updating PR #{pr_number}: {e}", file=sys.stderr)
+
+                pbar_update.update(1)
+                if args.sleep > 0:
+                    time.sleep(args.sleep)
+
+            pbar_update.close()
+
+            if updated_prs:
+                print(f"✓ Found {len(updated_prs)} PRs that have been closed/merged", file=sys.stderr)
+                # Update existing_rows with new data
+                for i, row in enumerate(existing_rows):
+                    if row.get("repo") == repo_key and row.get("number") in updated_prs:
+                        existing_rows[i] = updated_prs[row.get("number")]
+
+                # Rewrite the CSV with updated data
+                print(f"📝 Updating {out_path} with latest PR statuses...", file=sys.stderr)
+                with open(out_path, "w", newline="", encoding="utf-8") as f:
+                    writer = csv.DictWriter(f, fieldnames=fieldnames)
+                    writer.writeheader()
+                    writer.writerows(existing_rows)
+
+                # Remove updated PRs from processed_prs so they won't be skipped when fetching
+                # Actually, keep them in processed_prs since we just updated them
+                print(f"✓ Updated CSV with latest status", file=sys.stderr)
 
         # Determine the effective "since" date (latest of user-provided or latest in file)
         effective_since_dt = since_dt
@@ -322,7 +477,11 @@ def main() -> None:
         print(f"✓ Found {total_prs} new PRs to process", file=sys.stderr)
 
         if total_prs == 0:
-            print(f"⚠️  No new PRs found. Skipping.", file=sys.stderr)
+            if updated_prs:
+                # We updated some PRs but have no new PRs to fetch
+                print(f"✓ Completed {owner}/{repo} - updated {len(updated_prs)} existing PRs", file=sys.stderr)
+            else:
+                print(f"⚠️  No new PRs found. Skipping.", file=sys.stderr)
             continue
 
         # Open CSV file (append if exists and not forcing refresh, otherwise write new)
@@ -362,95 +521,16 @@ def main() -> None:
                     pbar.update(1)
                     continue
 
-                merged_at = dt_from_iso8601(pr.get("merged_at"))
-                closed_at = dt_from_iso8601(pr.get("closed_at"))
-
-                pr_url = pr.get("html_url")
-                author = (pr.get("user") or {}).get("login")
-                title = pr.get("title") or ""
-                draft = bool(pr.get("draft"))
-
+                pr_title = pr.get("title") or ""
                 # Update progress bar with current PR info
-                pbar.set_postfix_str(f"PR #{pr_number}: {title[:40]}{'...' if len(title) > 40 else ''}")
+                pbar.set_postfix_str(f"PR #{pr_number}: {pr_title[:40]}{'...' if len(pr_title) > 40 else ''}")
 
                 try:
-                    # Enrich to get size stats
-                    full = enrich_pr(session, token, owner, repo, pr_number, args.timeout, args.retries)
-                    additions = full.get("additions")
-                    deletions = full.get("deletions")
-                    changed_files = full.get("changed_files")
-                    commits = full.get("commits")
-
-                    # Reviews
-                    reviews = fetch_reviews(session, token, owner, repo, pr_number, args.timeout, args.sleep, args.retries)
-                    reviews_count = len(reviews)
-                    first_review_at = None
-                    if reviews:
-                        try:
-                            first_review_at = min(
-                                (dt_from_iso8601(r.get("submitted_at")) for r in reviews if r.get("submitted_at")),
-                                default=None
-                            )
-                        except Exception:
-                            first_review_at = None
-
-                    # Approvals (from reviews with state APPROVED)
-                    approvals = [r for r in reviews if r.get("state") == "APPROVED"]
-                    approvals_count = len(approvals)
-                    approval_authors = list(set((r.get("user") or {}).get("login") for r in approvals if (r.get("user") or {}).get("login")))
-                    approval_authors_str = ",".join(sorted(approval_authors))
-
-                    # Comments (both issue comments and review comments)
-                    issue_comments = fetch_issue_comments(session, token, owner, repo, pr_number, args.timeout, args.sleep, args.retries)
-                    review_comments = fetch_review_comments(session, token, owner, repo, pr_number, args.timeout, args.sleep, args.retries)
-                    all_comments = issue_comments + review_comments
-                    comments_count = len(all_comments)
-
-                    # Count comments per author
-                    comment_counts_by_author = {}
-                    for comment in all_comments:
-                        author_login = (comment.get("user") or {}).get("login")
-                        if author_login:
-                            comment_counts_by_author[author_login] = comment_counts_by_author.get(author_login, 0) + 1
-
-                    # Format as "author:count,author:count"
-                    comment_authors_str = ",".join(f"{author}:{count}" for author, count in sorted(comment_counts_by_author.items()))
-
-                    time_to_first_review_hours = hours_between(created_at, first_review_at)
-                    time_to_merge_hours = hours_between(created_at, merged_at)
-                    open_time_hours = None
-                    if merged_at is None:
-                        # If still open, measure time from creation to now
-                        # If closed but not merged, measure creation to closed
-                        now = datetime.now(timezone.utc)
-                        end = closed_at or now
-                        open_time_hours = hours_between(created_at, end)
+                    # Process the PR data
+                    row = process_pr_data(session, token, owner, repo, repo_key, pr,
+                                        args.timeout, args.sleep, args.retries)
 
                     # Write row immediately to CSV
-                    row = {
-                        "repo": repo_key,
-                        "number": pr_number,
-                        "title": title,
-                        "url": pr_url,
-                        "author": author,
-                        "draft": draft,
-                        "created_at": created_at.isoformat(),
-                        "closed_at": closed_at.isoformat() if closed_at else "",
-                        "merged_at": merged_at.isoformat() if merged_at else "",
-                        "additions": additions,
-                        "deletions": deletions,
-                        "changed_files": changed_files,
-                        "commits": commits,
-                        "reviews_count": reviews_count,
-                        "first_review_at": first_review_at.isoformat() if first_review_at else "",
-                        "time_to_first_review_hours": time_to_first_review_hours if time_to_first_review_hours is not None else "",
-                        "time_to_merge_hours": time_to_merge_hours if time_to_merge_hours is not None else "",
-                        "open_time_hours": open_time_hours if open_time_hours is not None else "",
-                        "comments_count": comments_count,
-                        "comment_authors": comment_authors_str,
-                        "approvals_count": approvals_count,
-                        "approval_authors": approval_authors_str,
-                    }
                     csv_writer.writerow(row)
                     csv_file.flush()  # Ensure data is written to disk
                     new_prs_count += 1
