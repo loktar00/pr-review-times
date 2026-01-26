@@ -210,6 +210,45 @@ Enable Pages in repository settings, source = `gh-pages`. The report will be ava
 
 ## Automation (GitHub Actions)
 
+This repository includes two GitHub Actions workflows for automated PR analytics:
+
+### Included Workflows
+
+#### `fetch-pr-data.yml` - Automated Data Collection
+- Runs daily at 8 AM Eastern (13:00 UTC)
+- Fetches PR data from configured repositories
+- Generates updated analysis report
+- Commits changes back to the repository
+- Can be triggered manually via workflow_dispatch
+
+#### `deploy-pages.yml` - GitHub Pages Deployment
+- Triggers on pushes to main (when web/, report/, or data/ change)
+- Triggers after successful fetch-pr-data workflow
+- Deploys the report to GitHub Pages
+- Can be triggered manually
+
+### Required Secrets
+
+To use these workflows, configure the following secrets in your repository settings (Settings → Secrets and variables → Actions):
+
+| Secret | Description |
+|--------|-------------|
+| `GH_PAT` | GitHub Personal Access Token with `repo` scope. Required for accessing PR data from private repositories. |
+| `PR_REPOS` | Space-separated list of repositories to analyze (e.g., `org/repo1 org/repo2`) |
+
+### Setup Instructions
+
+1. Fork this repository
+2. Go to Settings → Secrets and variables → Actions
+3. Add `GH_PAT` with a [Personal Access Token](https://github.com/settings/tokens) (repo scope)
+4. Add `PR_REPOS` with your repositories (e.g., `myorg/frontend myorg/backend`)
+5. Enable GitHub Pages (Settings → Pages → Source: GitHub Actions)
+6. Run the "Fetch PR Data" workflow manually or wait for the daily schedule
+
+### Manual Workflow Example
+
+If you prefer to set up your own workflow instead of using the included ones:
+
 ```yaml
 # .github/workflows/pr-analytics.yml
 name: Update PR Analytics
@@ -230,7 +269,7 @@ jobs:
           python scripts/gh_pr_times.py --repos your-org/your-repo
           python scripts/analyze_pr_times.py
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v3
         with:
