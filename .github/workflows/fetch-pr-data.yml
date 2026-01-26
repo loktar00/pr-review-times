@@ -1,0 +1,63 @@
+name: Fetch PR Data
+
+on:
+  schedule:
+    # Run daily at 8 AM Eastern (13:00 UTC)
+    - cron: '0 13 * * *'
+  workflow_dispatch:
+    inputs:
+      repos:
+        description: 'Space-separated list of repos (optional, uses PR_REPOS secret if empty)'
+        required: false
+        type: string
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history to preserve existing data
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Fetch PR data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+          PR_REPOS: ${{ github.event.inputs.repos || secrets.PR_REPOS }}
+        run: |
+          echo "Fetching PR data..."
+          python scripts/gh_pr_times.py
+
+      - name: Generate analysis report
+        run: |
+          echo "Generating analysis report..."
+          python scripts/analyze_pr_times.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Add data and report files
+          git add data/*.csv report/
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update PR data and report [skip ci]"
+            git push
+          fi
